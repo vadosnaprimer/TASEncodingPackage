@@ -1,0 +1,2 @@
+tvcman --list 
+pause
