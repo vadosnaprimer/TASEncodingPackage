@@ -83,8 +83,8 @@ factor = hd ? \
 
 #file = "logo.png"
 file = hd ? stackNDSscreens ? "logohdnds.png" : \
-			(last.height == 384) ? "logonds.png" : "hdlogo.png" : \
-			(last.height == 384) ? "logonds.png" : "logo.png" 
+	(last.height == 384) ? "logonds.png" : "hdlogo.png" : \
+	(last.height == 384) ? "logonds.png" : "logo.png" 
 
 # This fixes length based audio/video desync,
 # if it exists inside the encode (eg. Many PCEngine games).
@@ -510,16 +510,16 @@ function TASBlend(clip c, float "ratio") {
 }
 
 # Replace for partial blending.
-function Replace(clip c, int i, int j, clip d) {
-    Assert(i >= 0, "Replace: parameter i is negative")
-    Assert(j >= 0, "Replace: parameter j is negative")
-    p1 = c.Trim(0, -i)
-    p2 = d.Trim(i, j)
-    p3 = c.Trim(j + 1, 0)
-    p1 = (i == 0) ? c.Trim(0, -1).DeleteFrame(0) : p1
-    p3 = (j == 0) ? c.Trim(0, -1).DeleteFrame(0) : p3
+function Replace(clip dest, int start, int end, clip src) {
+    Assert(start >= 0, "Replace: parameter 'start' is negative")
+    Assert(  end >= 0, "Replace: parameter 'end' is negative")
+    p1 = dest.Trim(0, -start)
+    p2 =  src.Trim(start, end)
+    p3 = dest.Trim(end + 1, 0)
+    p1 = (start == 0) ? dest.Trim(0, -1).DeleteFrame(0) : p1
+    p3 = (  end == 0) ? dest.Trim(0, -1).DeleteFrame(0) : p3
     p1 + p2 + p3
-    return (c.HasAudio) ? last.AudioDub(c) : last
+    return (dest.HasAudio) ? last.AudioDub(dest) : last
 }
 
 last
