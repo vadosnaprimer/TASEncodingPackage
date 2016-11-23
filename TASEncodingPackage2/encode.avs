@@ -117,11 +117,8 @@ height = (height % 4 == 1) ? height + 3 : \
 c = handheld ? b : b.LanczosResize(width, height, taps=2)
 g = hd ? c : ((pass == 0) ? c : last)
 
-PSXbios = BizhawkPSX ? \
-AviSource("movie_0.avi").LanczosResize(g.width,g.height) + \
-AviSource("movie_1.avi").LanczosResize(g.width,g.height) + \
-AviSource("movie_2.avi").LanczosResize(g.width,g.height) + \
-AviSource("movie_3.avi").LanczosResize(g.width,g.height) : 0
+PSXbios = BizhawkPSX ? AppendSegment("movie_", 0, 3, "%01.0f", g.width,g.height) \
+	.ChangeFPS(g.FrameRateNumerator, g.FrameRateDenominator) : 0
 
 # Logo.
 d = ImageSource( \
