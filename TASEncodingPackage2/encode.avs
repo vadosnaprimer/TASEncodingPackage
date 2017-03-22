@@ -165,6 +165,7 @@ hd ? ng_bighalo( \
 )
 
 halffps ? SelectOdd : 0
+hd ? last.FrameRate > 60 ? ChangeFPS(60) : 0 : 0
 
 # Downloadable encodes need a resizing filter for the colourspace reduction.
 # HD encodes need to be point resized to keep the colour information faithful.
