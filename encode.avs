@@ -26,7 +26,7 @@ time = "00:00.0"
 rerecords = "0"
 
 # Subtitles timing and placement
-subFF = 3618						# first subtitles frame, set manually!
+subFF = 618							# first subtitles frame, set manually!
 subAlign = 8						# subtitles alignment (7/8/9)
 subYpos = 0							# subtitles vertical position
 subLength = int(last.FrameRate * 5)	# auto
@@ -61,11 +61,27 @@ ngdb = true		# use smart deblink for that, otherwise will tasblend (avoid tasble
 # AUTOMATED SETTINGS #
 ######################
 
-LoadPlugin("./programs/ExactDedup.dll")
-LoadPlugin("./programs/mvtools2.dll")
-LoadPlugin("./programs/mt_masktools-26.dll")
+LoadPlugin ("./programs/ExactDedup.dll")
+LoadPlugin ("./programs/mvtools2.dll")
+LoadPlugin ("./programs/mt_masktools-26.dll")
+LoadCPlugin("./programs/freesub.dll")
 
 pass = 0
+
+# VBjin-r103 special 3d methods
+# http://tasvideos.org/forum/viewtopic.php?p=435440#435440
+# at first HD pass, save left as 1.avi and right as 2.avi, both with a lossless codec
+vb = false								# for all VBjin encodes
+vbhdpass2 = false						# only for HD second pass. autoskips subs and logo
+lname = vbhdpass2 ? "1.avi" : "L.avi"
+rname = vbhdpass2 ? "2.avi" : "R.avi"
+left = vb ? Greyscale(AVISource(lname)).Levels(0,1.82,255,0,255).trim(0,trimframe) : 0
+right= vb ? Greyscale(AVISource(rname)).Levels(0,1.82,255,0,255).trim(0,trimframe) : 0
+temp = left								# switch this with right for HD first pass
+vb ? hd ? \
+	(vbhdpass2 ? yt3d(left, right).AudioDub(left) : temp) : \
+	Anaglyph(left, right, "grey").AudioDub(left) : 0
+	
 i444 = false
 desyncfixer = false
 
@@ -130,38 +146,53 @@ f = AudioDub(d, blankclip(g)).LanczosResize(g.width, g.height, taps=2)
 last = BizhawkPSX ? (f ++ PSXbios ++ g) : (f ++ g)
 
 # Subtitles variables
-subSize = (last.width <= 240) ? 10 : 12
+subHaloSize = 2
+subFont = (last.width <= 240) ? "helvR" : "helvB"
+subSize = (last.width <= 240) ? 8 : 10
+subFontFile = "./fonts/" + subFont + String(subSize) + ".bdf"
+subSize = (last.width <= 240) ? 10 : 11
+
+subLength = int(last.FrameRate * 5)
 subFF2 = SubFF + subLength + 1
-subString1 = game + "\n" + ((branch == "''") ? "" : (branch + "\n")) \
-	+ "Played by " + author + "\nPlaying time: " \
-	+ time + "\nRerecord count: " + rerecords	
-subString2 = "This is a tool\nassisted recording.\nFor details, visit\n" + \
-	"http://TASVideos.org/"
+subString1 = game + "\n" \
+	+ ((branch == "''") ? "" : (branch + "\n")) \
+	+ "Played by " + author \
+	+ "\nPlaying time: " + time \
+	+ "\nRerecord count: " + rerecords	
+subString2 = "This is a tool-\nassisted recording." \
+	+ "\nFor details, visit\nhttp://TASVideos.org/"
+	
 subDividend = (last.width > last.height) ? last.height : last.width
-subFactor = (subDividend / 240 < 1) ? 1 : subDividend / 240
+subFactor = (subDividend / 224 < 1) ? 1 : subDividend / 224
 subXpos = (subAlign == 7) ? (2 * factor) : \
 		  (subAlign == 8) ? last.width / 2 : \
 		  last.width - (2 * factor)
+subWidthFactor = float(last.width) / float(last.height)
+subColor = vb ? $009D9D9D : $00FFFFFF
 
 # Subtitles function
+vbhdpass2 ? 0 : \
 hd ? ng_bighalo( \
     subString1, x=subXpos,  y=(subYpos * subFactor), \
     align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
-    size=(subSize * subFactor), text_color=$00FFFFFF, halo_color=$00000000, lsp=2 \
-) : subtitle( \
-    subString1, x=(subXpos * factor),  y=(subYpos * subFactor), \
+    size=(subSize * subFactor), text_color=subColor, halo_color=$00000000, lsp=2 \
+) : FreeSub( \
+    subString1, x=(subXpos * factor),  y=((subYpos + subHaloSize) * subFactor), \
+    font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
     align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
-    size=(subSize * subFactor), text_color=$00FFFFFF, halo_color=$00000000, lsp=2 \
+    size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
 )
 
+vbhdpass2 ? 0 : \
 hd ? ng_bighalo( \
     subString2, x=subXpos,  y=(subYpos * subFactor), \
     align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
-    size=(subSize * subFactor), text_color=$00FFFFFF, halo_color=$00000000, lsp=2 \
-) : subtitle( \
-    subString2, x=(subXpos * factor),  y=(subYpos * subFactor), \
+    size=(subSize * subFactor), text_color=subColor, halo_color=$00000000, lsp=2 \
+) : FreeSub( \
+    subString2, x=(subXpos * factor),  y=((subYpos + subHaloSize) * subFactor), \
+    font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
     align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
-    size=(subSize * subFactor), text_color=$00FFFFFF, halo_color=$00000000, lsp=2 \
+    size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
 )
 
 halffps ? SelectOdd : 0
