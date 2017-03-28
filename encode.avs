@@ -151,7 +151,6 @@ subHaloSize = 2
 subFont = (last.width <= 240) ? "helvR" : "helvB"
 subSize = (last.width <= 240) ? 8 : 10
 subFontFile = "./fonts/" + subFont + string(subSize) + ".bdf"
-subSize = (last.width <= 240) ? 10 : 11
 subLength = int(last.FrameRate * 5)
 subFF2 = SubFF + subLength + 1
 subString1 = game + "\n" \
