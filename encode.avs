@@ -1,6 +1,6 @@
 # The downloadable/HD encoding script. For more information, see:
 # http://tasvideos.org/EncodingGuide/PublicationManual.html
-# Script updated 9.10.2016
+# Script updated 28.04.2017
 
  AviSource("movie.avi")
 # AppendSegment("movie_", 1, 8, "%02.0f", 0, 0)						# multisegment import
@@ -84,6 +84,7 @@ vb ? hd ? \
 	
 i444 = false
 desyncfixer = false
+OriginalHeight = last.height
 
 factor = hd ? \
   (handheld == false) ? \
@@ -149,9 +150,8 @@ last = BizhawkPSX ? (f ++ PSXbios ++ g) : (f ++ g)
 subHaloSize = 2
 subFont = (last.width <= 240) ? "helvR" : "helvB"
 subSize = (last.width <= 240) ? 8 : 10
-subFontFile = "./fonts/" + subFont + String(subSize) + ".bdf"
+subFontFile = "./fonts/" + subFont + string(subSize) + ".bdf"
 subSize = (last.width <= 240) ? 10 : 11
-
 subLength = int(last.FrameRate * 5)
 subFF2 = SubFF + subLength + 1
 subString1 = game + "\n" \
@@ -163,21 +163,17 @@ subString2 = "This is a tool-\nassisted recording." \
 	+ "\nFor details, visit\nhttp://TASVideos.org/"
 	
 subDividend = (last.width > last.height) ? last.height : last.width
-subFactor = (subDividend / 224 < 1) ? 1 : subDividend / 224
-subXpos = (subAlign == 7) ? (2 * factor) : \
-		  (subAlign == 8) ? last.width / 2 : \
-		  last.width - (2 * factor)
-subWidthFactor = float(last.width) / float(last.height)
+subFactor = last.height / OriginalHeight
 subColor = vb ? $009D9D9D : $00FFFFFF
 
 # Subtitles function
 vbhdpass2 ? 0 : \
 hd ? ng_bighalo( \
-    subString1, x=subXpos,  y=(subYpos * subFactor), \
+    subString1, y=(subYpos * subFactor), \
     align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
     size=(subSize * subFactor), text_color=subColor, halo_color=$00000000, lsp=2 \
 ) : FreeSub( \
-    subString1, x=(subXpos * factor),  y=((subYpos + subHaloSize) * subFactor), \
+    subString1, y=((subYpos + subHaloSize) * subFactor), \
     font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
     align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
     size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
@@ -185,11 +181,11 @@ hd ? ng_bighalo( \
 
 vbhdpass2 ? 0 : \
 hd ? ng_bighalo( \
-    subString2, x=subXpos,  y=(subYpos * subFactor), \
+    subString2, y=(subYpos * subFactor), \
     align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
     size=(subSize * subFactor), text_color=subColor, halo_color=$00000000, lsp=2 \
 ) : FreeSub( \
-    subString2, x=(subXpos * factor),  y=((subYpos + subHaloSize) * subFactor), \
+    subString2, y=((subYpos + subHaloSize) * subFactor), \
     font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
     align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
     size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
