@@ -127,11 +127,13 @@ stackNDSscreens ? (hd ? StackHorizontal(HalfScreen.PointResize(last.width*2, las
 b = last.PointResize(last.width * factor, last.height * factor)
 
 # Aspect ratio correction
-width = (b.width > b.height * 4 / 3) ? b.width : b.height * 4 / 3
+waspect = 4
+haspect = 3
+width = (b.width > b.height * waspect / haspect) ? b.width : b.height * waspect / haspect
 width = (width % 4 == 1) ? width + 3 : \
         (width % 4 == 2) ? width + 2 : \
         (width % 4 == 3) ? width + 1 : width
-height = (b.width > b.height * 4 / 3) ? b.width * 3 / 4 : b.height
+height = (b.width > b.height * waspect / haspect) ? b.width * haspect / waspect : b.height
 height = (height % 4 == 1) ? height + 3 : \
          (height % 4 == 2) ? height + 2 : \
          (height % 4 == 3) ? height + 1 : height
