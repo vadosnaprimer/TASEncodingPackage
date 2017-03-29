@@ -26,7 +26,7 @@ time = "00:00.0"
 rerecords = "0"
 
 # Subtitles timing and placement
-subFF = 618							# first subtitles frame, set manually!
+subFF = 600							# first subtitles frame, set manually!
 subAlign = 8						# subtitles alignment (7/8/9)
 subYpos = 0							# subtitles vertical position
 
@@ -152,6 +152,9 @@ f = AudioDub(d, blankclip(g)).LanczosResize(g.width, g.height, taps=2)
 last = BizhawkPSX ? (f ++ PSXbios ++ g) : (f ++ g)
 
 # Subtitles variables
+subXpos = (subAlign == 7) ? (2 * factor) : \
+		  (subAlign == 8) ? last.width / 2 : \
+		  last.width - (2 * factor)
 subHaloSize = 2
 subFont = (last.width <= 240) ? "helvR" : "helvB"
 subSize = (last.width <= 240) ? 8 : 10
@@ -172,11 +175,11 @@ subColor = vb ? $009D9D9D : $00FFFFFF
 # Subtitles function
 vbhdpass2 ? 0 : \
 hd ? ng_bighalo( \
-    subString1, y=(subYpos * subFactor), \
+    subString1, x=subXpos, y=(subYpos * subFactor), \
     align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
     size=(subSize * subFactor), text_color=subColor, halo_color=$00000000, lsp=2 \
 ) : FreeSub( \
-    subString1, y=((subYpos + subHaloSize) * subFactor), \
+    subString1, x=subXpos, y=((subYpos + subHaloSize) * subFactor), \
     font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
     align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
     size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
@@ -184,11 +187,11 @@ hd ? ng_bighalo( \
 
 vbhdpass2 ? 0 : \
 hd ? ng_bighalo( \
-    subString2, y=(subYpos * subFactor), \
+    subString2, x=subXpos, y=(subYpos * subFactor), \
     align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
     size=(subSize * subFactor), text_color=subColor, halo_color=$00000000, lsp=2 \
 ) : FreeSub( \
-    subString2, y=((subYpos + subHaloSize) * subFactor), \
+    subString2, x=subXpos, y=((subYpos + subHaloSize) * subFactor), \
     font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
     align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
     size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
