@@ -29,7 +29,6 @@ rerecords = "0"
 subFF = 618							# first subtitles frame, set manually!
 subAlign = 8						# subtitles alignment (7/8/9)
 subYpos = 0							# subtitles vertical position
-subLength = int(last.FrameRate * 5)	# auto
 
 # Deblink
 blend = false	# compensate for 30 fps flickering at all. always check if the run requires it!
@@ -159,8 +158,7 @@ subString1 = game + "\n" \
 	+ "\nPlaying time: " + time \
 	+ "\nRerecord count: " + rerecords	
 subString2 = "This is a tool-\nassisted recording." \
-	+ "\nFor details, visit\nhttp://TASVideos.org/"
-	
+	+ "\nFor details, visit\nhttp://TASVideos.org/"	
 subDividend = (last.width > last.height) ? last.height : last.width
 subFactor = last.height / OriginalHeight
 subColor = vb ? $009D9D9D : $00FFFFFF
