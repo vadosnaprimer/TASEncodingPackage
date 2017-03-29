@@ -60,10 +60,11 @@ ngdb = true		# use smart deblink for that, otherwise will tasblend (avoid tasble
 # AUTOMATED SETTINGS #
 ######################
 
-LoadPlugin ("./programs/ExactDedup.dll")
-LoadPlugin ("./programs/mvtools2.dll")
-LoadPlugin ("./programs/mt_masktools-26.dll")
-LoadCPlugin("./programs/freesub.dll")
+root = ScriptDir()
+LoadPlugin (root+"programs\ExactDedup.dll")
+LoadPlugin (root+"programs\mvtools2.dll")
+LoadPlugin (root+"programs\mt_masktools-26.dll")
+LoadCPlugin(root+"programs\freesub.dll")
 
 pass = 0
 
