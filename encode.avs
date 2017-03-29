@@ -87,16 +87,21 @@ desyncfixer = false
 OriginalHeight = last.height
 
 factor = hd ? \
-  (handheld == false) ? \
-    (last.height >= 1080) ? 1 : \
-    (last.height >= 540)  ? 2 : \
-    (last.height >= 270)  ? 4 : \
-    (last.height >= 180)  ? 6 : \
-  8 : \
-    (last.height >= 1440) ? 1 : \
-    (last.height >=  720) ? 2 : \
-    (last.height >=  360) ? 4 : \
-  8 : 1
+	(handheld == false) ? \
+		(last.height >= 1080) ?  1 : \
+		(last.height >=  540) ?  2 : \
+		(last.height >=  270) ?  4 : \
+		(last.height >=  180) ?  6 : \
+		(last.height >=  135) ?  8 : \
+		(last.height >=   68) ? 16 : \
+	24 : \
+		(last.height >= 1440) ?  1 : \
+		(last.height >=  720) ?  2 : \
+		(last.height >=  360) ?  4 : \
+		(last.height >=  240) ?  6 : \
+		(last.height >=  180) ?  8 : \
+		(last.height >=   90) ? 16 : \
+	24 : 1
 
 #file = "logo.png"
 file = hd ? stackNDSscreens ? "logohdnds.png" : \
