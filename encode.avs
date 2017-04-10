@@ -171,7 +171,7 @@ subString1 = game + "\n" \
 subString2 = "This is a tool-\nassisted recording." \
 	+ "\nFor details, visit\nhttp://TASVideos.org/"	
 subDividend = (last.width > last.height) ? last.height : last.width
-subFactor = last.height / OriginalHeight
+subFactor = last.height / OriginalHeight * (hd ? stackNDSscreens ? 2 : 1 : 1)
 subColor = vb ? $009D9D9D : $00FFFFFF
 
 # Subtitles function
