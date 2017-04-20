@@ -42,7 +42,7 @@ ngdb = true		# use smart deblink for that, otherwise will tasblend (avoid tasble
 # hd ? 0 : LanczosResize(256,384)				# hires desmume 
 # AssumeFPS(last.FrameCount / last.AudioLengthF * last.AudioRate)	# progressing desync
 
-# Dolphin. remove /* and */ to uncomment
+# old Dolphin. remove /* and */ to uncomment
 # get values at http://tasvideos.org/forum/viewtopic.php?p=373299#373299
 /*
  M = 486000000
@@ -157,10 +157,12 @@ last = BizhawkPSX ? (f ++ PSXbios ++ g) : (f ++ g)
 subXpos = (subAlign == 7) ? (2 * factor) : \
 		  (subAlign == 8) ? last.width / 2 : \
 		  last.width - (2 * factor)
-subHaloSize = 2
+subSize = \
+	(last.width <= 240) ? 8 : \
+	(last.width <  384) ? 10 : 14
 subFont = (last.width <= 240) ? "helvR" : "helvB"
-subSize = (last.width <= 240) ? 8 : 10
 subFontFile = "./fonts/" + subFont + string(subSize) + ".bdf"
+subHaloSize = 2
 subLength = int(last.FrameRate * 5)
 subFF2 = SubFF + subLength + 1
 subString1 = game + "\n" \
@@ -169,9 +171,9 @@ subString1 = game + "\n" \
 	+ "\nPlaying time: " + time \
 	+ "\nRerecord count: " + rerecords	
 subString2 = "This is a tool-\nassisted recording." \
-	+ "\nFor details, visit\nhttp://TASVideos.org/"	
-subDividend = (last.width > last.height) ? last.height : last.width
-subFactor = last.height / OriginalHeight * (hd ? stackNDSscreens ? 2 : 1 : 1)
+	+ "\nFor details, visit\nhttp://TASVideos.org/"
+subFactor = last.height / OriginalHeight
+subSize = last.height < last.width ? last.height / 21 : last.width / 21 # override for hd
 subColor = vb ? $009D9D9D : $00FFFFFF
 
 # Subtitles function
@@ -179,7 +181,7 @@ vbhdpass2 ? 0 : \
 hd ? ng_bighalo( \
     subString1, x=subXpos, y=(subYpos * subFactor), \
     align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
-    size=(subSize * subFactor), text_color=subColor, halo_color=$00000000, lsp=2 \
+    size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
 ) : FreeSub( \
     subString1, x=subXpos, y=((subYpos + subHaloSize) * subFactor), \
     font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
@@ -191,7 +193,7 @@ vbhdpass2 ? 0 : \
 hd ? ng_bighalo( \
     subString2, x=subXpos, y=(subYpos * subFactor), \
     align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
-    size=(subSize * subFactor), text_color=subColor, halo_color=$00000000, lsp=2 \
+    size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
 ) : FreeSub( \
     subString2, x=subXpos, y=((subYpos + subHaloSize) * subFactor), \
     font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
