@@ -1,7 +1,7 @@
-:: feos, 2013 (cheers to Guga, Velitha and nanogyth)
+:: feos, 2013-2017 (cheers to Guga, Velitha, nanogyth, Aktan and Dacicus)
 :: This global batch is a part of "TAS Encoding Package":
-:: http://tasvideos.org/EncodingGuide/HybridEncodeScript.html
-:: Asks whether the console is TV based to autoset the SAR parameter.
+:: http://tasvideos.org/EncodingGuide/PublicationManual.html
+:: Asks whether the console is TV based to autoset the SAR parameter (4:3 only so far).
 :: Allows to select the encode to make.
 
 @echo off
@@ -82,7 +82,7 @@ echo --------------------------------
 echo.
 :: Video ::
 "./programs/replacetext" "encode.avs" "i444 = false" "i444 = true"
-"./programs/x264-10" --threads auto --sar "%VAR%" --crf 20 --keyint 600 --ref 16 --no-fast-pskip --bframes 16 --b-adapt 2 --direct auto --me tesa --merange 64 --subme 11 --trellis 2 --partitions all --no-dct-decimate --input-range pc --range pc --tcfile-in "./temp/times.txt" -o "./temp/video.mkv" --colormatrix smpte170m --output-csp i444 encode.avs
+"./programs/avs2pipemod" -y4mp encode.avs | "./programs/x264-10_x64" --threads auto --sar "%VAR%" --crf 20 --keyint 600 --ref 16 --no-fast-pskip --bframes 16 --b-adapt 2 --direct auto --me tesa --merange 64 --subme 11 --trellis 2 --partitions all --no-dct-decimate --input-range pc --range pc --tcfile-in "./temp/times.txt" -o "./temp/video.mkv" --colormatrix smpte170m --output-csp i444 --demuxer y4m -
 :: Muxing ::
 "./programs/mkvmerge" -o "./output/encode.mkv" --timecodes -1:"./temp/times.txt" "./temp/video.mkv" "./temp/audio.opus"
  if "%EncodeChoice%"=="1" goto Defaults
@@ -97,9 +97,10 @@ echo.
 :: Video ::
 "./programs/replacetext" "encode.avs" "pass = 2" "pass = 0"
 "./programs/replacetext" "encode.avs" "i444 = true" "i444 = false"
-"./programs/x264" --threads auto --crf 20 --keyint 600 --ref 16 --no-fast-pskip --bframes 16 --b-adapt 2 --direct auto --me tesa --merange 64 --subme 11 --trellis 2 --partitions all --no-dct-decimate --range tv --input-range tv --colormatrix smpte170m -o "./temp/video_512kb.mp4" encode.avs
+"./programs/avs2pipemod" -y4mp encode.avs | "./programs/x264_x64" --threads auto --crf 20 --keyint 600 --ref 16 --no-fast-pskip --bframes 16 --b-adapt 2 --direct auto --me tesa --merange 64 --subme 11 --trellis 2 --partitions all --no-dct-decimate --range tv --input-range tv --colormatrix smpte170m -o "./temp/video_512kb.h264" --demuxer y4m -
 :: Muxing ::
-"./programs/MP4Box" -hint -add "./temp/video_512kb.mp4" -add "./temp/audio.mp4" -new "./output/encode_512kb.mp4"
+for /f "tokens=2" %%i in ('%~dp0\programs\avs2pipemod -info encode.avs ^|find "fps"') do (set fps=%%i)
+"./programs/MP4Box" -hint -add "./temp/video_512kb.h264":fps=%fps% -add "./temp/audio.mp4" -new "./output/encode_512kb.mp4"
  if "%EncodeChoice%"=="2" goto Defaults
 
 : HD
@@ -112,7 +113,7 @@ echo ----------------------------
 echo.
 :: Video ::
 "./programs/replacetext" "encode.avs" "hd = false" "hd = true"
-"./programs/x264" --qp 5 -b 0 --keyint infinite --output "./temp/video_youtube.mkv" encode.avs
+"./programs/avs2pipemod" -y4mp encode.avs | "./programs/x264_x64" --qp 5 -b 0 --keyint infinite --output "./temp/video_youtube.mkv" --demuxer y4m -
 "./programs/replacetext" "encode.avs" "hd = true" "hd = false"
 :: Muxing ::
 "./programs/mkvmerge" -o "./output/encode_youtube.mkv" --compression -1:none "./temp/video_youtube.mkv" "./temp/audio_youtube.ogg"
@@ -146,7 +147,7 @@ echo --------------------------------
 echo.
 :: Video ::
 "./programs/replacetext" "encode.avs" "i444 = false" "i444 = true"
-"./programs/x264-10" --threads auto --sar "%VAR%" --crf 20 --keyint 600 --preset veryslow --input-range pc --range pc --tcfile-in "./temp/times.txt" -o "./temp/video_extra.mkv" --colormatrix smpte170m --output-csp i444 encode.avs
+"./programs/x264-10_x64" --threads auto --sar "%VAR%" --crf 20 --keyint 600 --preset veryslow --input-range pc --range pc --tcfile-in "./temp/times.txt" -o "./temp/video_extra.mkv" --colormatrix smpte170m --output-csp i444 encode.avs
 :: Muxing ::
 "./programs/mkvmerge" -o "./output/encode_extra.mkv" --timecodes -1:"./temp/times.txt" "./temp/video_extra.mkv" "./temp/audio_extra.opus"
 
@@ -160,7 +161,7 @@ echo.
 :: Video ::
 "./programs/replacetext" "encode.avs" "pass = 2" "pass = 0"
 "./programs/replacetext" "encode.avs" "i444 = true" "i444 = false"
-"./programs/x264" --threads auto --crf 20 --keyint 600 --preset veryslow --range tv --input-range tv --colormatrix smpte170m -o "./temp/video_512kb_extra.mp4" encode.avs
+"./programs/x264_x64" --threads auto --crf 20 --keyint 600 --preset veryslow --range tv --input-range tv --colormatrix smpte170m -o "./temp/video_512kb_extra.mp4" encode.avs
 :: Muxing ::
 "./programs/MP4Box" -hint -add "./temp/video_512kb_extra.mp4" -add "./temp/audio_extra.mp4" -new "./output/encode_512kb_extra.mp4"
 
