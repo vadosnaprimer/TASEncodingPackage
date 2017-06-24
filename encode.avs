@@ -115,7 +115,6 @@ denom = last.FrameCount * last.FrameRateDenominator
 fixedaudiorate = Round(num / denom)
 (desyncfixer) ? last.AssumeSampleRate(fixedaudiorate) : 0
 
-Trim(0, trimframe - int(last.FrameRate * 2))
 hd ? blend ? ngdb ? ng_deblink(0.5) : TasBlend() : 0 : 0
 
 # Stack 3 NDS screens.
@@ -152,6 +151,7 @@ d = ImageSource( \
 e = BlankClip(d, audio_rate=last.AudioRate, channels=last.AudioChannels)
 f = AudioDub(d, blankclip(g)).LanczosResize(g.width, g.height, taps=2)
 last = BizhawkPSX ? (f ++ PSXbios ++ g) : (f ++ g)
+Trim(0, trimframe)
 
 # Subtitles variables
 subXpos = (subAlign == 7) ? (2 * factor) : \
