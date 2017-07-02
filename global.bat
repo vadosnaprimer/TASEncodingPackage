@@ -101,7 +101,7 @@ echo.
 :: Muxing ::
 for /f "tokens=2" %%i in ('%~dp0\programs\avs2pipemod -info encode.avs ^|find "fps"') do (set fps=%%i)
 for /f %%k in ('%~dp0\programs\div %fps%') do (set double=%%k)
-"./programs/MP4Box" -hint -add "./temp/video_512kb.h264":fps=%double% -add "./temp/audio.mp4" -new "./output/encode_512kb.mp4"
+"./programs/mp4box_x64" -hint -add "./temp/video_512kb.h264":fps=%double% -add "./temp/audio.mp4" -new "./output/encode_512kb.mp4"
  if "%EncodeChoice%"=="2" goto Defaults
 
 : HD
