@@ -1,6 +1,5 @@
 # The downloadable/HD encoding script. For more information, see:
 # http://tasvideos.org/EncodingGuide/PublicationManual.html
-# Script updated 28.04.2017
 
  AviSource("movie.avi")
 # AppendSegment("movie_", 1, 8, "%02.0f", 0, 0)						# multisegment import
@@ -17,6 +16,7 @@ stackNDSscreens = false	# stack one of NDS screens near both of them for HD
 BizhawkPSX = false		# don't downscale PSX BIOS for youtube:
 							# picks the first 4 avi segments as bios screen
 							# use the rest as usual encode
+vb = false				# for Virtual Boy encodes
 
 # Subtitles contents
 game = "Game Name"
@@ -68,19 +68,11 @@ LoadCPlugin(root+"programs\freesub.dll")
 
 pass = 0
 
-# VBjin-r103 special 3d methods
+# VirtualBoy (bizhawk)
 # http://tasvideos.org/forum/viewtopic.php?p=435440#435440
-# at first HD pass, save left as 1.avi and right as 2.avi, both with a lossless codec
-vb = false								# for all VBjin encodes
-vbhdpass2 = false						# only for HD second pass. autoskips subs and logo
-lname = vbhdpass2 ? "1.avi" : "L.avi"
-rname = vbhdpass2 ? "2.avi" : "R.avi"
-left = vb ? Greyscale(AVISource(lname)).Levels(0,1.82,255,0,255).trim(0,trimframe) : 0
-right= vb ? Greyscale(AVISource(rname)).Levels(0,1.82,255,0,255).trim(0,trimframe) : 0
-temp = left								# switch this with right for HD first pass
-vb ? hd ? \
-	(vbhdpass2 ? yt3d(left, right).AudioDub(left) : temp) : \
-	Anaglyph(left, right, "grey").AudioDub(left) : 0
+left = vb ? Crop(  0, 0, 384, 224).Levels(0, 1, 255, 0, 157) : 0
+right= vb ? Crop(384, 0, 384, 224).Levels(0, 1, 255, 0, 157) : 0
+vb ? hd ? 0 : Anaglyph(left, right, "grey").AudioDub(left) : 0
 	
 i444 = false
 desyncfixer = false
@@ -157,6 +149,7 @@ Trim(0, trimframe)
 subXpos = (subAlign == 7) ? (2 * factor) : \
 		  (subAlign == 8) ? last.width / 2 : \
 		  last.width - (2 * factor)
+subXpos = hd ? vb ? subXpos / 2 : subXpos : subXpos
 subSize = \
 	(last.width <= 240) ? 8 : \
 	(last.width <  384) ? 10 : 14
@@ -164,6 +157,7 @@ subFont = (last.width <= 240) ? "helvR" : "helvB"
 subFontFile = "./fonts/" + subFont + string(subSize) + ".bdf"
 subHaloSize = 2
 subLength = int(last.FrameRate * 5)
+subFF = vb ? hd ? subFF - int(last.FrameRate * 2) : subFF : subFF
 subFF2 = SubFF + subLength + 1
 subString1 = game + "\n" \
 	+ ((branch == "''") ? "" : (branch + "\n")) \
@@ -176,9 +170,33 @@ subFactor = last.height / OriginalHeight
 subSize = last.height < last.width ? last.height / 21 : last.width / 21 # override for hd
 subColor = vb ? $009D9D9D : $00FFFFFF
 
+# Virtual Boy hacks
+left = hd ? vb ? f.PointResize(last.width / 2, last.height) ++ \
+left.PointResize(last.width / 2, last.height).ng_bighalo( \
+    subString1, x=subXpos, y=(subYpos * subFactor), \
+    align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
+    size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
+).ng_bighalo( \
+    subString2, x=subXpos, y=(subYpos * subFactor), \
+    align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
+    size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
+) : 0 : 0
+
+right = hd ? vb ? f.PointResize(last.width / 2, last.height) ++ \
+right.PointResize(last.width / 2, last.height).ng_bighalo( \
+    subString1, x=subXpos, y=(subYpos * subFactor), \
+    align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
+    size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
+).ng_bighalo( \
+    subString2, x=subXpos, y=(subYpos * subFactor), \
+    align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
+    size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
+) : 0 : 0
+
+last = hd ? vb ? yt3d(left, right).AudioDub(left) : last : last
+
 # Subtitles function
-vbhdpass2 ? 0 : \
-hd ? ng_bighalo( \
+hd ? vb ? 0 : ng_bighalo( \
     subString1, x=subXpos, y=(subYpos * subFactor), \
     align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
     size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
@@ -189,8 +207,7 @@ hd ? ng_bighalo( \
     size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
 )
 
-vbhdpass2 ? 0 : \
-hd ? ng_bighalo( \
+hd ? vb ? 0 : ng_bighalo( \
     subString2, x=subXpos, y=(subYpos * subFactor), \
     align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
     size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \

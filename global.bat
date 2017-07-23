@@ -10,6 +10,12 @@
 "./programs/replacetext" "encode.avs" "pass = 2" "pass = 0"
 "./programs/replacetext" "encode.avs" "i444 = true" "i444 = false"
 "./programs/replacetext" "encode.avs" "hd = true" "hd = false"
+"./programs/replacetext" "encode.avs" "vb = true" "vb = false"
+
+:: Uncomment for a VirtualBoy encode
+:: set /a VIRTUALBOY=1
+
+if "%VIRTUALBOY%"=="1" ("./programs/replacetext" "encode.avs" "vb = false" "vb = true")
 
 echo.
 echo -----------------------
@@ -119,12 +125,15 @@ echo.
 :: Muxing ::
 "./programs/mkvmerge" -o "./output/encode_youtube.mkv" --compression -1:none "./temp/video_youtube.mkv" "./temp/audio_youtube.ogg"
 
+if "%VIRTUALBOY%"=="1" (set VBPREF="_vb_") else (set VBPREF="_")
+if "%VIRTUALBOY%"=="1" ("./programs/ffmpeg" -i "./output/encode_youtube.mkv" -c copy -metadata:s:v:0 stereo_mode=1 "./output/encode%VBPREF%youtube.mkv")
+
 echo.
 echo -----------------------------
 echo  Uploading YouTube HD stream 
 echo -----------------------------
 echo.
- "./programs\tvcman.exe" "./output/encode_youtube.mkv" todo tasvideos < "./programs/ytdesc.txt"
+ "./programs\tvcman.exe" "./output/encode%VBPREF%youtube.mkv" todo tasvideos < "./programs/ytdesc.txt"
  start https://encoders.tasvideos.org/status.html
 goto Defaults
 
@@ -173,3 +182,4 @@ for /f %%k in ('%~dp0\programs\div %fps%') do (set double=%%k)
 "./programs/replacetext" "encode.avs" "pass = 2" "pass = 0"
 "./programs/replacetext" "encode.avs" "i444 = true" "i444 = false"
 "./programs/replacetext" "encode.avs" "hd = true" "hd = false"
+"./programs/replacetext" "encode.avs" "vb = true" "vb = false"
