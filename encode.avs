@@ -1,6 +1,5 @@
 # The downloadable/HD encoding script. For more information, see:
 # http://tasvideos.org/EncodingGuide/PublicationManual.html
-# Script updated 28.04.2017
 
  AviSource("movie.avi")
 # AppendSegment("movie_", 1, 8, "%02.0f", 0, 0)						# multisegment import
@@ -155,7 +154,7 @@ last = BizhawkPSX ? (f ++ PSXbios ++ g) : (f ++ g)
 
 # Subtitles variables
 subXpos = (subAlign == 7) ? (2 * factor) : \
-		  (subAlign == 8) ? last.width / 2 : \
+		  (subAlign == 8) ? (hd == stackNDSscreens == true) ? last.width / 3 : last.width / 2 : \
 		  last.width - (2 * factor)
 subSize = \
 	(last.width <= 240) ? 8 : \
