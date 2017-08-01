@@ -147,7 +147,7 @@ Trim(0, trimframe)
 
 # Subtitles variables
 subXpos = (subAlign == 7) ? (2 * factor) : \
-		  (subAlign == 8) ? last.width / 2 : \
+		  (subAlign == 8) ? (hd == stackNDSscreens == true) ? last.width / 3 : last.width / 2 : \
 		  last.width - (2 * factor)
 subXpos = hd ? vb ? subXpos / 2 : subXpos : subXpos
 subSize = \
