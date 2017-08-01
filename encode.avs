@@ -1,6 +1,6 @@
 # The downloadable/HD encoding script. For more information, see:
 # http://tasvideos.org/EncodingGuide/PublicationManual.html
-# Script updated 28.04.2017
+# Script updated 01.08.2017
 
  AviSource("movie.avi")
 # AppendSegment("movie_", 1, 8, "%02.0f", 0, 0)						# multisegment import
