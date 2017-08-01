@@ -63,11 +63,37 @@ set /p EncodeChoice=
 if "%EncodeChoice%"=="1" goto 10bit444
 if "%EncodeChoice%"=="2" goto 512kb
 if "%EncodeChoice%"=="3" goto HD
-if "%EncodeChoice%"=="4" goto 10bit444
+if "%EncodeChoice%"=="4" goto HD
 if "%EncodeChoice%"=="5" goto ExtraHQ
 echo.
 echo You better choose something real!
 goto Set choice
+
+: HD
+:: Audio ::
+"./programs/avs2pipemod" -wav encode.avs | "./programs/venc" -q10 - "./temp/audio_youtube.ogg"
+echo.
+echo ----------------------------
+echo  Encoding YouTube HD stream 
+echo ----------------------------
+echo.
+:: Video ::
+"./programs/replacetext" "encode.avs" "hd = false" "hd = true"
+"./programs/avs2pipemod" -y4mp encode.avs | "./programs/x264_x64" --qp 5 -b 0 --keyint infinite --output "./temp/video_youtube.mkv" --demuxer y4m -
+"./programs/replacetext" "encode.avs" "hd = true" "hd = false"
+:: Muxing ::
+"./programs/mkvmerge" -o "./output/encode_youtube.mkv" --compression -1:none "./temp/video_youtube.mkv" "./temp/audio_youtube.ogg"
+goto Defaults
+if "%VIRTUALBOY%"=="1" (set VBPREF="_vb_") else (set VBPREF="_")
+if "%VIRTUALBOY%"=="1" ("./programs/ffmpeg" -i "./output/encode_youtube.mkv" -c copy -metadata:s:v:0 stereo_mode=1 "./output/encode%VBPREF%youtube.mkv")
+
+echo.
+echo -----------------------------
+echo  Uploading YouTube HD stream 
+echo -----------------------------
+echo.
+start call "./programs\tvcman.exe" "./output/encode%VBPREF%youtube.mkv" todo tasvideos ^< "./programs/ytdesc.txt" ^& exit
+if "%EncodeChoice%"=="3" goto Defaults
 
 : 10bit444
 :: Audio ::
@@ -108,33 +134,6 @@ echo.
 for /f "tokens=2" %%i in ('%~dp0\programs\avs2pipemod -info encode.avs ^|find "fps"') do (set fps=%%i)
 for /f %%k in ('%~dp0\programs\div %fps%') do (set double=%%k)
 "./programs/mp4box_x64" -hint -add "./temp/video_512kb.h264":fps=%double% -add "./temp/audio.mp4" -new "./output/encode_512kb.mp4"
- if "%EncodeChoice%"=="2" goto Defaults
-
-: HD
-:: Audio ::
- "./programs/avs2pipemod" -wav encode.avs | "./programs/venc" -q10 - "./temp/audio_youtube.ogg"
-echo.
-echo ----------------------------
-echo  Encoding YouTube HD stream 
-echo ----------------------------
-echo.
-:: Video ::
-"./programs/replacetext" "encode.avs" "hd = false" "hd = true"
-"./programs/avs2pipemod" -y4mp encode.avs | "./programs/x264_x64" --qp 5 -b 0 --keyint infinite --output "./temp/video_youtube.mkv" --demuxer y4m -
-"./programs/replacetext" "encode.avs" "hd = true" "hd = false"
-:: Muxing ::
-"./programs/mkvmerge" -o "./output/encode_youtube.mkv" --compression -1:none "./temp/video_youtube.mkv" "./temp/audio_youtube.ogg"
-
-if "%VIRTUALBOY%"=="1" (set VBPREF="_vb_") else (set VBPREF="_")
-if "%VIRTUALBOY%"=="1" ("./programs/ffmpeg" -i "./output/encode_youtube.mkv" -c copy -metadata:s:v:0 stereo_mode=1 "./output/encode%VBPREF%youtube.mkv")
-
-echo.
-echo -----------------------------
-echo  Uploading YouTube HD stream 
-echo -----------------------------
-echo.
- "./programs\tvcman.exe" "./output/encode%VBPREF%youtube.mkv" todo tasvideos < "./programs/ytdesc.txt"
- start https://encoders.tasvideos.org/status.html
 goto Defaults
 
 : ExtraHQ
