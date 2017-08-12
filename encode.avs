@@ -2,12 +2,17 @@
 # http://tasvideos.org/EncodingGuide/PublicationManual.html
 
  AviSource("movie.avi")
+ 
+# A = FFAudioSource("movie.wav")			# new dolphin
+# V = FFVideoSource("movie.avi",fpsnum=60)	# new dolphin, set fps appropriately
+# AudioDub(V, A)							# new dolphin
+
 # AppendSegment("movie_", 1, 8, "%02.0f", 0, 0)						# multisegment import
 # 	string format: "02" means pad with zeros up to 2 digits
+
 # audio = WavSource("movie_000.wav")								# psxjin
 # AudioDub(audio, last)												# psxjin
 
-ConvertToRGB32()
 trimframe = 472969		# manual, discards logo lengh automatically
 handheld = false		# auto, but set it for preview
 hd = false				# auto, but set it for preview
@@ -34,7 +39,10 @@ subYpos = 0							# subtitles vertical position
 blend = false	# compensate for 30 fps flickering at all. always check if the run requires it!
 ngdb = true		# use smart deblink for that, otherwise will tasblend (avoid tasblend!)
 
-# StackVertical(last, Crop(0, Height-1, 0, 0))	# NTSC SMS with overscan enabled
+# Aspect ratio correction
+waspect = 4
+haspect = 3
+
 # Crop(32,0,-32,0) 								# lowres genesis
 # Crop(0,0,-0,-20)								# old mupen
 # ResampleAudio(last,44100)						# old mupen
@@ -66,93 +74,91 @@ LoadPlugin (root+"programs\mvtools2.dll")
 LoadPlugin (root+"programs\mt_masktools-26.dll")
 LoadCPlugin(root+"programs\freesub.dll")
 
-pass = 0
+# adds 1 scanline if height is uneven (ntsc sms, pal c64)
+last.height % 2 > 0 ? StackVertical(last, Crop(0, Height-1, 0, 0)) : 0
 
 # VirtualBoy (bizhawk)
 # http://tasvideos.org/forum/viewtopic.php?p=435440#435440
 left = vb ? Crop(  0, 0, 384, 224).Levels(0, 1, 255, 0, 157) : 0
 right= vb ? Crop(384, 0, 384, 224).Levels(0, 1, 255, 0, 157) : 0
 vb ? hd ? 0 : Anaglyph(left, right, "grey").AudioDub(left) : 0
-	
+
+pass = 0
 i444 = false
 desyncfixer = false
+OriginalWidth  = last.width
 OriginalHeight = last.height
 
-factor = hd ? \
-	(handheld == false) ? \
-		(last.height >= 1080) ?  1 : \
-		(last.height >=  540) ?  2 : \
-		(last.height >=  270) ?  4 : \
-		(last.height >=  180) ?  6 : \
-		(last.height >=  135) ?  8 : \
-		(last.height >=   68) ? 16 : \
-	24 : \
-		(last.height >= 1440) ?  1 : \
-		(last.height >=  720) ?  2 : \
-		(last.height >=  360) ?  4 : \
-		(last.height >=  240) ?  6 : \
-		(last.height >=  180) ?  8 : \
-		(last.height >=   90) ? 16 : \
-	24 : 1
+file = hd \
+	? vb \
+		? "logoGrey.png" \
+		: stackNDSscreens \
+			? "logohdnds.png" \
+			: (last.height == 384) \
+				? "logonds.png" \
+				: "hdlogo.png" \
+	: (last.height == 384) \
+		? "logonds.png" \
+		: "logo.png" 
 
-#file = "logo.png"
-file = hd ? stackNDSscreens ? "logohdnds.png" : \
-	(last.height == 384) ? "logonds.png" : "hdlogo.png" : \
-	(last.height == 384) ? "logonds.png" : "logo.png" 
-
-# This fixes length based audio/video desync,
-# if it exists inside the encode (eg. Many PCEngine games).
-num = last.AudioLengthF * last.FrameRateNumerator
-denom = last.FrameCount * last.FrameRateDenominator
-fixedaudiorate = Round(num / denom)
-(desyncfixer) ? last.AssumeSampleRate(fixedaudiorate) : 0
-
+ConvertToRGB32()
 hd ? blend ? ngdb ? ng_deblink(0.5) : TasBlend() : 0 : 0
 
 # Stack 3 NDS screens.
 UpperScreen = last.Crop(0, 0, -0, last.height/2)
 LowerScreen = last.Crop(0, last.height/2, -0, -0)
-HalfScreen = UpperScreen							# set which NDS screen to place as main
-stackNDSscreens ? (hd ? StackHorizontal(HalfScreen.PointResize(last.width*2, last.height), last) : 0) : 0
-
-b = last.PointResize(last.width * factor, last.height * factor)
+HalfScreen = UpperScreen	# set which NDS screen to place as main
+stackNDSscreens ? hd \
+	? StackHorizontal(HalfScreen.PointResize(last.width*2, last.height), last) \
+	: 0 : 0
 
 # Aspect ratio correction
-waspect = 4
-haspect = 3
-width = (b.width > b.height * waspect / haspect) ? b.width : b.height * waspect / haspect
-width = (width % 4 == 1) ? width + 3 : \
-        (width % 4 == 2) ? width + 2 : \
-        (width % 4 == 3) ? width + 1 : width
-height = (b.width > b.height * waspect / haspect) ? b.width * haspect / waspect : b.height
+height = hd \
+	? 2160 \
+	: last.width > (last.height * waspect / haspect) \
+		? (last.width * haspect / waspect) \
+		: last.height
+
+width = handheld \
+	? height * last.width / last.height \
+	: height * waspect / haspect
+
+width  = (width  % 4 == 1) ? width  + 3 : \
+		 (width  % 4 == 2) ? width  + 2 : \
+		 (width  % 4 == 3) ? width  + 1 : width
+
 height = (height % 4 == 1) ? height + 3 : \
-         (height % 4 == 2) ? height + 2 : \
-         (height % 4 == 3) ? height + 1 : height
+		 (height % 4 == 2) ? height + 2 : \
+		 (height % 4 == 3) ? height + 1 : height
 
-c = handheld ? b : b.LanczosResize(width, height, taps=2)
-g = hd ? c : ((pass == 0) ? c : last)
+g = hd \
+	? PointResize(width, height) \
+	: handheld || pass != 0 \
+		? last \
+		: LanczosResize(width, height, taps=2)
 
-PSXbios = BizhawkPSX ? AppendSegment("movie_", 0, 3, "%01.0f", g.width,g.height) \
-	.ChangeFPS(g.FrameRateNumerator, g.FrameRateDenominator) : 0
+PSXbios = BizhawkPSX \
+	? AppendSegment("movie_", 0, 3, "%01.0f", g.width,g.height) \
+		.ChangeFPS(g.FrameRateNumerator, g.FrameRateDenominator) \
+	: 0
 
 # Logo.
-d = ImageSource( \
-    file=file, start=0, end=int((last.FrameRate * 2) - 1), fps=last.FrameRate \
-).ConvertToRGB32().AssumeFPS( \
-    last.FrameRateNumerator, last.FrameRateDenominator)
-e = BlankClip(d, audio_rate=last.AudioRate, channels=last.AudioChannels)
-f = AudioDub(d, blankclip(g)).LanczosResize(g.width, g.height, taps=2)
+d = ImageSource(file=file, start=0, end=int((g.FrameRate * 2) - 1), fps=g.FrameRate) \
+	.ConvertToRGB32().AssumeFPS(g.FrameRateNumerator, g.FrameRateDenominator)
+e = BlankClip(d, audio_rate=g.AudioRate, channels=g.AudioChannels)
+f = AudioDub(d, BlankClip(g)).LanczosResize(g.width, g.height, taps=2)
+
 last = BizhawkPSX ? (f ++ PSXbios ++ g) : (f ++ g)
-Trim(0, trimframe)
 
 # Subtitles variables
+factor  = hd ? last.width / OriginalWidth : 1
 subXpos = (subAlign == 7) ? (2 * factor) : \
-		  (subAlign == 8) ? (hd == stackNDSscreens == true) ? last.width / 3 : last.width / 2 : \
+		  (subAlign == 8) ? last.width / 2 : \
 		  last.width - (2 * factor)
 subXpos = hd ? vb ? subXpos / 2 : subXpos : subXpos
 subSize = \
 	(last.width <= 240) ? 8 : \
-	(last.width <  384) ? 10 : 14
+	(last.width <  384) ? 10 : 12
 subFont = (last.width <= 240) ? "helvR" : "helvB"
 subFontFile = "./fonts/" + subFont + string(subSize) + ".bdf"
 subHaloSize = 2
@@ -220,19 +226,27 @@ hd ? vb ? 0 : ng_bighalo( \
 
 halffps ? SelectOdd : 0
 hd ? last.FrameRate > 60 ? ChangeFPS(60) : 0 : 0
+Trim(0, trimframe)
 
 # Downloadable encodes need a resizing filter for the colourspace reduction.
 # HD encodes need to be point resized to keep the colour information faithful.
-ConvertToYV24(chromaresample="point", matrix=(hd ? "Rec709" : "PC.601") )
-(pass == 1) ? ExactDedup(firstpass=true, \
-	dupinfo="./temp/dup.txt", \
-	times="./temp/times.txt" \
-) : last
-(pass == 2) ? ExactDedup(firstpass=false, dupinfo="./temp/dup.txt") : last
-i444 ? last : ConvertToYV12( \
-	chromaresample=(hd ? "point" : "lanczos"), \
-	matrix=(hd ? "Rec709" : (pass == 0 ? "Rec601" : "PC.601")) \
-)
+ConvertToYV24(chromaresample="point", matrix=(hd ? "Rec709" : "PC.601"))
+	
+(pass == 1) \
+	? ExactDedup(firstpass=true, dupinfo="./temp/dup.txt", times="./temp/times.txt") \
+	: last
+
+(pass == 2) \
+	? ExactDedup(firstpass=false, dupinfo="./temp/dup.txt") \
+	: last
+
+i444 \
+	? last \
+	: ConvertToYV12(chromaresample="lanczos", matrix=(hd \
+		? "Rec709" \
+		: (pass == 0 \
+			? "Rec601" \
+			: "PC.601")))
 
 ####################
 # CUSTOM FUNCTIONS #
@@ -258,9 +272,9 @@ function AppendSegment(
 
 # nanogyth's deblink.
 function ng_deblink(clip clp,
-\ float "ratio",
-\ int "level",
-\ clip "blinkmask"
+\  float "ratio",
+\    int "level",
+\   clip "blinkmask"
 \){
 #Version 10 2012.04.22
 
@@ -298,13 +312,13 @@ function ng_deblink(clip clp,
 }
 
 function ng_blinkmask(clip clp,
-\ bool "TEST",
-\ bool "STABILIZE",
-\ bool "SHARP",
-\ bool "HYSTER",
-\ int "inpand",
-\ int "expand",
-\ int "ml"
+\   bool "TEST",
+\   bool "STABILIZE",
+\   bool "SHARP",
+\   bool "HYSTER",
+\    int "inpand",
+\    int "expand",
+\    int "ml"
 \){
 #Version 10 2012.04.22
 
