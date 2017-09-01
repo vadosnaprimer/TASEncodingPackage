@@ -83,7 +83,7 @@ echo.
 "./programs/replacetext" "encode.avs" "hd = true" "hd = false"
 :: Muxing ::
 "./programs/mkvmerge" -o "./output/encode_youtube.mkv" --compression -1:none "./temp/video_youtube.mkv" "./temp/audio_youtube.ogg"
-goto Defaults
+
 if "%VIRTUALBOY%"=="1" (set VBPREF="_vb_") else (set VBPREF="_")
 if "%VIRTUALBOY%"=="1" ("./programs/ffmpeg" -i "./output/encode_youtube.mkv" -c copy -metadata:s:v:0 stereo_mode=1 "./output/encode%VBPREF%youtube.mkv")
 
