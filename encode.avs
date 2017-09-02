@@ -146,7 +146,7 @@ PSXbios = BizhawkPSX \
 d = ImageSource(file=file, start=0, end=int((g.FrameRate * 2) - 1), fps=g.FrameRate) \
 	.ConvertToRGB32().AssumeFPS(g.FrameRateNumerator, g.FrameRateDenominator)
 e = BlankClip(d, audio_rate=g.AudioRate, channels=g.AudioChannels)
-f = AudioDub(d, BlankClip(g)).LanczosResize(g.width, g.height, taps=2)
+f = AudioDub(d, e).LanczosResize(g.width, g.height, taps=2)
 
 last = BizhawkPSX ? (f ++ PSXbios ++ g) : (f ++ g)
 
