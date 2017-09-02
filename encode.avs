@@ -224,9 +224,9 @@ hd ? vb ? 0 : ng_bighalo( \
     size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
 )
 
+Trim(0, trimframe)
 halffps ? SelectOdd : 0
 hd ? last.FrameRate > 60 ? ChangeFPS(60) : 0 : 0
-Trim(0, trimframe)
 
 # Downloadable encodes need a resizing filter for the colourspace reduction.
 # HD encodes need to be point resized to keep the colour information faithful.
