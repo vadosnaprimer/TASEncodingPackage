@@ -97,7 +97,7 @@ if "%EncodeChoice%"=="3" goto Defaults
 
 : 10bit444
 :: Audio ::
-"./programs/avs2pipemod" -wav encode.avs | "./programs/opusenc" --bitrate 64 - "./temp/audio.opus"
+"./programs/avs2pipemod" -wav encode.avs | "./programs/sox" -t wav - -t wav - trim 0.0065 | "./programs/opusenc" --bitrate 64 --padding 0 - "./temp/audio.opus"
 echo.
 echo ----------------------
 echo  Generating timecodes 
@@ -121,7 +121,7 @@ echo.
 
 : 512kb
 :: Audio ::
-"./programs/avs2pipemod" -wav encode.avs | "./programs/sox" -t wav - -t wav - trim 4672s | "./programs/neroAacEnc" -q 0.25 -if - -of "./temp/audio.mp4"
+"./programs/avs2pipemod" -wav encode.avs | "./programs/qaac64" -v 0 --he -q 2 --delay -5187s --threading --no-smart-padding - -o "./temp/audio.mp4"
 echo -------------------------------
 echo  Encoding Archive 512kb stream 
 echo -------------------------------
