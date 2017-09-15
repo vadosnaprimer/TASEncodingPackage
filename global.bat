@@ -35,8 +35,8 @@ goto SAR OPTIONS
 "./programs/replacetext" "encode.avs" "handheld = true" "handheld = false"
 "./programs/replacetext" "encode.avs" "pass = 0" "pass = 1"
 "./programs/avs2pipemod" -info encode.avs > "./temp/info.txt"
-for /f "tokens=2" %%G in ('FIND "width" "./temp/info.txt"') do (set width=%%G)
-for /f "tokens=2" %%G in ('FIND "height" "./temp/info.txt"') do (set height=%%G)
+for /f "tokens=2" %%G in ('FIND "width" "%~dp0/temp/info.txt"') do (set width=%%G)
+for /f "tokens=2" %%G in ('FIND "height" "%~dp0/temp/info.txt"') do (set height=%%G)
 set /a "SAR_w=4 * %height%"
 set /a "SAR_h=3 * %width%"
 set VAR=%SAR_w%:%SAR_h%
