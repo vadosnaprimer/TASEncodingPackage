@@ -131,7 +131,7 @@ echo.
 "./programs/replacetext" "encode.avs" "i444 = true" "i444 = false"
 "./programs/avs2pipemod" -y4mp encode.avs | "./programs/x264_x64" --threads auto --crf 20 --keyint 600 --ref 16 --no-fast-pskip --bframes 16 --b-adapt 2 --direct auto --me tesa --merange 64 --subme 11 --trellis 2 --partitions all --no-dct-decimate --range tv --input-range tv --colormatrix smpte170m -o "./temp/video_512kb.h264" --demuxer y4m -
 :: Muxing ::
-for /f "tokens=2" %%i in ('%~dp0\programs\avs2pipemod -info encode.avs ^|find "fps"') do (set fps=%%i)
+for /f "tokens=2" %%i in ('%~dp0\programs\avs2pipemod -info %~dp0\encode.avs ^|find "fps"') do (set fps=%%i)
 for /f %%k in ('%~dp0\programs\div %fps%') do (set double=%%k)
 "./programs/mp4box_x64" -hint -add "./temp/video_512kb.h264":fps=%double% -add "./temp/audio.mp4" -new "./output/encode_512kb.mp4"
 goto Defaults
@@ -172,7 +172,7 @@ echo.
 "./programs/replacetext" "encode.avs" "i444 = true" "i444 = false"
 "./programs/avs2pipemod" -y4mp encode.avs | "./programs/x264_x64" --threads auto --crf 20 --keyint 600 --preset veryslow --range tv --input-range tv --colormatrix smpte170m -o "./temp/video_512kb_extra.h264" --demuxer y4m -
 :: Muxing ::
-for /f "tokens=2" %%i in ('%~dp0\programs\avs2pipemod -info encode.avs ^|find "fps"') do (set fps=%%i)
+for /f "tokens=2" %%i in ('%~dp0\programs\avs2pipemod -info %~dp0\encode.avs ^|find "fps"') do (set fps=%%i)
 for /f %%k in ('%~dp0\programs\div %fps%') do (set double=%%k)
 "./programs/mp4box_x64" -hint -add "./temp/video_512kb_extra.h264":fps=%double% -add "./temp/audio_extra.mp4" -new "./output/encode_512kb_extra.mp4"
 
