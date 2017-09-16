@@ -12,6 +12,7 @@
 
 # audio = WavSource("movie_000.wav")								# psxjin
 # AudioDub(audio, last)												# psxjin
+# ConvertAudioTo16bit()												# famtasia
 
 trimframe = 472969		# manual, discards logo lengh automatically
 handheld = false		# auto, but set it for preview
