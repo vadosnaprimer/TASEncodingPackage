@@ -1,8 +1,9 @@
 :: feos, 2013-2017 (cheers to Guga, Velitha, nanogyth, Aktan and Dacicus)
 :: This global batch is a part of "TAS Encoding Package":
 :: http://tasvideos.org/EncodingGuide/PublicationManual.html
-:: Asks whether the console is TV based to autoset the SAR parameter (4:3 only so far).
-:: Allows to select the encode to make.
+:: Asks for aspect ratio to use
+:: Allows to select encode to make
+:: Accepts command line arguments
 
 @echo off
 setlocal enableextensions
@@ -19,45 +20,90 @@ setlocal enableextensions
 
 if "%VIRTUALBOY%"=="1" (".\programs\replacetext" "encode.avs" "vb = false" "vb = true")
 
-echo.
 echo -----------------------
-echo  Hybrid Encoding Batch 
+echo  Hybrid Encoding Batch
 echo -----------------------
 echo.
-echo Command-line arguments: global.bat ^<tv^> ^<enc_opt^>
-echo   ^<tv^>        TV-based console?   y/n
-echo   ^<enc_opt^>   Encode option?      1-5
+echo Command-line arguments: global.bat ^<arc^> ^<enc_opt^>
+echo   ^<arc^>       Aspect ratio?    1-3 or width:height
+echo   ^<enc_opt^>   Encode option?   1-5
 echo.
 
-if [%1]==[y] goto TV sar
-if [%1]==[n] goto handheld sar
+if [%1]==[] goto SAR_OPTIONS
+if [%1]==[1] goto Handheld_SAR
+if [%1]==[2] (
+set ar_w=4
+set ar_h=3
+goto TV_SAR
+)
+if [%1]==[3] (
+set ar_w=16
+set ar_h=9
+goto TV_SAR
+)
+set aspect_ratio=%1
+goto Parse_AR
 
-: SAR OPTIONS
-echo Is this a TV based console? (y/n)
-set /p ANSWER=
-if "%ANSWER%"=="y" goto TV sar
-if "%ANSWER%"=="n" goto handheld sar
+: SAR_OPTIONS
+echo Aspect ratio options:
+echo.
+echo Press 1 for  1:1 (no change)
+echo Press 2 for  4:3 (CRT TV)
+echo Press 3 for 16:9 (LCD TV)
+echo Press 4 to enter your own
+echo.
+set /p ANSWER=Choice? 
+if "%ANSWER%"=="1" goto Handheld_SAR
+if "%ANSWER%"=="2" (
+set ar_w=4
+set ar_h=3
+goto TV_SAR
+)
+if "%ANSWER%"=="3" (
+set ar_w=16
+set ar_h=9
+goto TV_SAR
+)
+if "%ANSWER%"=="4" goto Get_AR
 echo I'm not kidding!
-goto SAR OPTIONS
+goto SAR_OPTIONS
 
-: TV sar
+: Get_AR
+set ar_w=
+set ar_h=
+set /p aspect_ratio=Enter aspect ratio in the format width:height 
+
+: Parse_AR
+for /f "tokens=1 delims=:" %%g in ('echo %aspect_ratio%') do (set /a "ar_w=%%g")
+for /f "tokens=2 delims=:" %%g in ('echo %aspect_ratio%') do (set /a "ar_h=%%g")
+if [%ar_w%]==[] goto Get_AR
+if [%ar_h%]==[] goto Get_AR
+if %ar_w% leq 0 goto Get_AR
+if %ar_h% leq 0 goto Get_AR
+goto TV Sar
+
+: TV_SAR
+for /f "tokens=2 skip=2 delims== " %%G in ('find "waspect = " "%~dp0encode.avs"') do (set current_waspect=%%G)
+".\programs\replacetext" "encode.avs" "waspect = %current_waspect%" "waspect = %ar_w%"
+for /f "tokens=2 skip=2 delims== " %%G in ('find "haspect = " "%~dp0encode.avs"') do (set current_haspect=%%G)
+".\programs\replacetext" "encode.avs" "haspect = %current_haspect%" "haspect = %ar_h%")
 ".\programs\replacetext" "encode.avs" "handheld = true" "handheld = false"
 ".\programs\replacetext" "encode.avs" "pass = 0" "pass = 1"
 ".\programs\avs2pipemod" -info encode.avs > ".\temp\info.txt"
 for /f "tokens=2" %%G in ('FIND "width" "%~dp0temp\info.txt"') do (set width=%%G)
 for /f "tokens=2" %%G in ('FIND "height" "%~dp0temp\info.txt"') do (set height=%%G)
-set /a "SAR_w=4 * %height%"
-set /a "SAR_h=3 * %width%"
+set /a "SAR_w=%ar_w% * %height%"
+set /a "SAR_h=%ar_h% * %width%"
 set VAR=%SAR_w%:%SAR_h%
 ".\programs\replacetext" "encode.avs" "pass = 1" "pass = 0"
-goto ENCODE OPTIONS
+goto ENCODE_OPTIONS
 
-: handheld sar
+: Handheld_SAR
 set VAR=1:1
 ".\programs\replacetext" "encode.avs" "handheld = false" "handheld = true"
-goto ENCODE OPTIONS
+goto ENCODE_OPTIONS
 
-: ENCODE OPTIONS
+: ENCODE_OPTIONS
 if [%2]==[1] goto 10bit444
 if [%2]==[2] goto 512kb
 if [%2]==[3] goto HD
@@ -73,7 +119,7 @@ echo Press 3 for HD Stream.
 echo Press 4 for All of the above.
 echo Press 5 for extra HQ encodes.
 
-: Set choice
+: Set_choice
 set /p EncodeChoice=
 if "%EncodeChoice%"=="1" goto 10bit444
 if "%EncodeChoice%"=="2" goto 512kb
@@ -82,7 +128,7 @@ if "%EncodeChoice%"=="4" goto HD
 if "%EncodeChoice%"=="5" goto ExtraHQ
 echo.
 echo You better choose something real!
-goto Set choice
+goto Set_choice
 
 : HD
 :: Audio ::
