@@ -95,9 +95,11 @@ LoadPlugin (root + "programs\ExactDedup.dll")
 LoadCPlugin(root + "programs\freesub.dll")
 
 #	Deblink (uncomment corresponding variables above)
-# LoadPlugin(root + "programs\mvtools2.dll")
-# LoadPlugin(root + "programs\mt_masktools-26.dll")
-# hd && blend ? ngdb ? ng_deblink(0.5) : TasBlend() : 0
+/*
+LoadPlugin(root + "programs\mvtools2.dll")
+LoadPlugin(root + "programs\mt_masktools-26.dll")
+hd && blend ? ngdb ? ng_deblink(0.5) : TasBlend() : 0
+*/
 
 #	Add 1 scanline if height is uneven (ntsc sms, pal c64)
 last.height % 2 > 0 ? StackVertical(last, Crop(0, Height-1, 0, 0)) : 0
@@ -178,7 +180,7 @@ subFont 	= (last.width <= 240) ? "helvR" : "helvB"
 subFontFile = "./fonts/" + subFont + string(subSize) + ".bdf"
 subHaloSize = 2
 subLength	= int(last.FrameRate * 5)
-subFF		= vb ? hd ? subFF - int(last.FrameRate * 2) : subFF : subFF
+subFF		= vb && hd ? subFF - int(last.FrameRate * 2) : subFF 
 subFF2		= SubFF + subLength + 1
 subString1	= game + "\n" \
 			+ ((branch == "''") ? "" : (branch + "\n")) \
