@@ -134,7 +134,7 @@ circle_12="0 0 "+\
 "-12 -1 -12 -2 -11 -3 -11 -4 -11 -5 -10 -6 -10 -7 -9 -8 "+\
 "1 -12  2 -12 3 -11 4 -11 5 -11 6 -10 7 -10 8 -9 "+\
 "12 -1  12 -2 11 -3 11 -4 11 -5 10 -6 10 -7 9 -8 "
-    halo = (defined(halo_radius)) ? mt_circle(halo_radius) : circle_12
+    halo = (defined(halo_radius) && halo_radius != 0) ? mt_circle(halo_radius) : circle_12
 
     invis = BlankClip(1, w, h, pixel_type="YV12")
     tm = Subtitle(invis, text, x, y, 0, 0, font, size, $00FFFFFF,\

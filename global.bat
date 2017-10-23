@@ -30,7 +30,7 @@ echo   ^<enc_opt^>   Encode option?   1-5
 echo.
 
 if [%1]==[] goto SAR_OPTIONS
-if [%1]==[1] goto Handheld_SAR
+if [%1]==[1] goto handHeld_SAR
 if [%1]==[2] (
 set ar_w=4
 set ar_h=3
@@ -53,7 +53,7 @@ echo Press 3 for 16:9 (LCD TV)
 echo Press 4 to enter your own
 echo.
 set /p ANSWER=Choice? 
-if "%ANSWER%"=="1" goto Handheld_SAR
+if "%ANSWER%"=="1" goto handHeld_SAR
 if "%ANSWER%"=="2" (
 set ar_w=4
 set ar_h=3
@@ -83,11 +83,11 @@ if %ar_h% leq 0 goto Get_AR
 goto TV Sar
 
 : TV_SAR
-for /f "tokens=2 skip=2 delims== " %%G in ('find "waspect = " "%~dp0encode.avs"') do (set current_waspect=%%G)
-".\programs\replacetext" "encode.avs" "waspect = %current_waspect%" "waspect = %ar_w%"
-for /f "tokens=2 skip=2 delims== " %%G in ('find "haspect = " "%~dp0encode.avs"') do (set current_haspect=%%G)
-".\programs\replacetext" "encode.avs" "haspect = %current_haspect%" "haspect = %ar_h%")
-".\programs\replacetext" "encode.avs" "handheld = true" "handheld = false"
+for /f "tokens=2 skip=2 delims== " %%G in ('find "wAspect = " "%~dp0encode.avs"') do (set current_wAspect=%%G)
+".\programs\replacetext" "encode.avs" "wAspect = %current_wAspect%" "wAspect = %ar_w%"
+for /f "tokens=2 skip=2 delims== " %%G in ('find "hAspect = " "%~dp0encode.avs"') do (set current_hAspect=%%G)
+".\programs\replacetext" "encode.avs" "hAspect = %current_hAspect%" "hAspect = %ar_h%")
+".\programs\replacetext" "encode.avs" "handHeld = true" "handHeld = false"
 ".\programs\replacetext" "encode.avs" "pass = 0" "pass = 1"
 ".\programs\avs2pipemod" -info encode.avs > ".\temp\info.txt"
 for /f "tokens=2" %%G in ('FIND "width" "%~dp0temp\info.txt"') do (set width=%%G)
@@ -98,9 +98,9 @@ set VAR=%SAR_w%:%SAR_h%
 ".\programs\replacetext" "encode.avs" "pass = 1" "pass = 0"
 goto ENCODE_OPTIONS
 
-: Handheld_SAR
+: handHeld_SAR
 set VAR=1:1
-".\programs\replacetext" "encode.avs" "handheld = false" "handheld = true"
+".\programs\replacetext" "encode.avs" "handHeld = false" "handHeld = true"
 goto ENCODE_OPTIONS
 
 : ENCODE_OPTIONS

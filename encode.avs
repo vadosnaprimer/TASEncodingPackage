@@ -3,17 +3,17 @@
 
 AviSource("movie.avi")
 
-#	New Dolphin (set fps properly, remove /* and */ to uncomment)
+#	Dolphin (set fps properly, remove /* and */ to uncomment)
 /*
 V = FFVideoSource("movie.avi", fpsnum=60)
 A = FFAudioSource("movie.wav")
 AudioDub(V, A)
 */
 
-trimframe = 472969	# manual, discards logo lengh automatically
-handheld = false	# auto, but set it for preview
+trimFrame = 654321	# manual, discards logo lengh automatically
+handHeld = false	# auto, but set it for preview
 hd = false			# auto, but set it for preview
-halffps = false		# for games that "lag" every other frame
+halfFPS = false		# for games that "lag" every other frame
 stackNDS = false	# stack one of NDS screens near both of them for HD
 vb = false			# for Virtual Boy encodes
 
@@ -28,6 +28,7 @@ rerecords = "0"
 subFF = 600			# first subtitles frame, set manually!
 subAlign = 8		# subtitles alignment (7/8/9)
 subYpos = 0			# subtitles vertical position
+bighaloCutoff = 480	# width above this will use bighalo instead of freesub
 
 #	Multisegment import (upscales hires segments straight to HD when needed)
 #	requires normally importing a sample whose attributes it will use for all segments
@@ -37,9 +38,16 @@ ms_start = 0		# number of the first segment
 ms_end = 117		# number of the first segment
 ms_format = "%1.0f"	# string format: http://avisynth.nl/index.php/Internal_functions#String
 
+#	Extra HQ (upscaled downloadable encodes)
+hq = false			# auto
+hq_scale = 2		# manual for now
+hq_hiResSrc = false	# hires 3D source needs downscaling, lowres pixelated source needs upscaling
+hq_baseWidth = 320	# when downscaling is needed, put native width of the console here
+hq_baseHeight = 240	# when downscaling is needed, put native height of the console here
+
 #	Aspect ratio correction
-waspect = 4
-haspect = 3
+wAspect = 4
+hAspect = 3
 
 ################
 # LEGACY STUFF #
@@ -92,17 +100,15 @@ ConvertToRGB32()
 root = ScriptDir()
 Import     (root + "programs\functions.avsi")
 LoadPlugin (root + "programs\ExactDedup.dll")
+LoadPlugin (root + "programs\mvtools2.dll")
+LoadPlugin (root + "programs\mt_masktools-26.dll")
 LoadCPlugin(root + "programs\freesub.dll")
-
-#	Deblink (uncomment corresponding variables above)
-/*
-LoadPlugin(root + "programs\mvtools2.dll")
-LoadPlugin(root + "programs\mt_masktools-26.dll")
-hd && blend ? ngdb ? ng_deblink(0.5) : TasBlend() : 0
-*/
 
 #	Add 1 scanline if height is uneven (ntsc sms, pal c64)
 last.height % 2 > 0 ? StackVertical(last, Crop(0, Height-1, 0, 0)) : 0
+
+#	Deblink (uncomment corresponding variables above)
+# hd && blend ? ngdb ? ng_deblink(0.5) : TasBlend() : 0
 
 #	VirtualBoy (bizhawk only!)
 #	http://tasvideos.org/forum/viewtopic.php?p=435440#435440
@@ -112,9 +118,8 @@ vb ? hd ? 0 : Anaglyph(left, right, "grey").AudioDub(left) : 0
 
 pass = 0
 i444 = false
-desyncfixer = false
-OriginalWidth  = last.width
-OriginalHeight = last.height
+originalWidth  = last.width
+originalHeight = last.height
 
 #	Pick logo file
 file = hd \
@@ -130,20 +135,20 @@ file = hd \
 		: "logo.png"
 
 #	Stack 3 NDS screens
-UpperScreen = last.Crop(0, 0, -0, last.height/2)
-LowerScreen = last.Crop(0, last.height/2, -0, -0)
-HalfScreen = UpperScreen	# set which NDS screen to put as main
-stackNDS && hd ? StackHorizontal(HalfScreen.PointResize(last.width*2, last.height), last) : 0
+upperScreen = last.Crop(0, 0, -0, last.height/2)
+lowerScreen = last.Crop(0, last.height/2, -0, -0)
+halfScreen = upperScreen	# set which NDS screen to put as main
+stackNDS && hd ? StackHorizontal(halfScreen.PointResize(last.width*2, last.height), last) : 0
 
 #	Aspect ratio correction
 height = hd \
 	? 2160 \
-	: last.width > (last.height * waspect / haspect) \
-		? (last.width * haspect / waspect) \
+	: last.width > (last.height * wAspect / hAspect) \
+		? (last.width * hAspect / wAspect) \
 		: last.height
-width = handheld \
+width = handHeld \
 	? height * last.width / last.height \
-	: height * waspect / haspect
+	: height * wAspect / hAspect
 width  = (width  % 4 == 1) ? width  + 3 : \
 		 (width  % 4 == 2) ? width  + 2 : \
 		 (width  % 4 == 3) ? width  + 1 : width
@@ -154,11 +159,11 @@ height = (height % 4 == 1) ? height + 3 : \
 #	Rescaling
 g = hd \
 	? PointResize(width, height) \
-	: handheld || pass != 0 \
+	: handHeld || pass != 0 \
 		? last \
 		: LanczosResize(width, height, taps=2)
 
-#	If ms enabled, we use parameters of "g" to apply to our segments
+#	If ms enabled, we use parameters of "g" to apply to all segments
 g = ms ? g.AppendSegment(ms_base, ms_start, ms_end, ms_format, hd) : g
 
 #	Logo
@@ -169,16 +174,21 @@ f = AudioDub(d, e).LanczosResize(g.width, g.height, taps=2)
 f ++ g
 
 #	Subtitles variables
-factor  	= hd ? last.width / OriginalWidth : 1
+factor  	= hd ? last.width / originalWidth : 1
 subXpos 	= (subAlign == 7) ? (2 * factor) : \
 			  (subAlign == 8) ? last.width / 2 : \
 			  last.width - (2 * factor)
-subXpos 	= hd ? vb ? subXpos / 2 : subXpos : subXpos
-subSize 	= (last.width <= 240) ? 8 : \
-			  (last.width <  384) ? 10 : 12
-subFont 	= (last.width <= 240) ? "helvR" : "helvB"
-subFontFile = "./fonts/" + subFont + string(subSize) + ".bdf"
-subHaloSize = 2
+subXpos 	= hd && vb ? subXpos / 2 : subXpos
+subSize 	= last.width > bighaloCutoff \
+			? last.height < last.width ? last.height / 21 : last.width / 21 \
+			: (last.width <= 240) ?  8 \
+			: (last.width <= 384) ? 10 \
+			: (last.width <= 480) ? 14 \
+			: (last.width <= 640) ? 18 : 24
+subHaloSize = floor(subSize / 4)
+subFont 	= "helv"	# set manually to whatever you like
+subFontName = subFont + (last.width <= 240 ? "R" : "B")
+subFontFile = "./fonts/" + subFontName + string(subSize) + ".bdf"
 subLength	= int(last.FrameRate * 5)
 subFF		= vb && hd ? subFF - int(last.FrameRate * 2) : subFF 
 subFF2		= SubFF + subLength + 1
@@ -189,9 +199,9 @@ subString1	= game + "\n" \
 			+ "\nRerecord count: " + rerecords	
 subString2	= "This is a tool-\nassisted recording." \
 			+ "\nFor details, visit\nhttp://TASVideos.org/"
-subFactor	= last.height / OriginalHeight
-subSize		= last.height < last.width ? last.height / 21 : last.width / 21 # override for hd
+subFactor	= last.height / originalHeight
 subColor	= vb ? $009D9D9D : $00FFFFFF
+subRadius	= hd ? 0 : subHaloSize
 
 #	Virtual Boy hacks
 left = hd && vb ? \
@@ -221,30 +231,30 @@ right = hd && vb ? \
 hd && vb ? yt3d(left, right).AudioDub(left) : 0
 
 #	Subtitles functions
-hd ? vb ? 0 : ng_bighalo( \
-    subString1, x=subXpos, y=(subYpos * subFactor), \
-    align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
-    size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
+(last.width > bighaloCutoff) ? vb ? 0 : ng_bighalo( \
+	subString1, x=subXpos, y=(subYpos * subFactor), align=subAlign, \
+	first_frame=subFF, last_frame=(subFF + subLength), size=subSize, \
+	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius \
 ) : FreeSub( \
-    subString1, x=subXpos, y=((subYpos + subHaloSize) * subFactor), \
-    font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
-    align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
-    size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
+	subString1, x=subXpos, y=((subYpos + subHaloSize) * subFactor), \
+	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
+	align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
+	size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
 )
 
-hd ? vb ? 0 : ng_bighalo( \
-    subString2, x=subXpos, y=(subYpos * subFactor), \
-    align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
-    size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
+(last.width > bighaloCutoff) ? vb ? 0 : ng_bighalo( \
+	subString1, x=subXpos, y=(subYpos * subFactor), align=subAlign, \
+	first_frame=subFF, last_frame=(subFF + subLength), size=subSize, \
+	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius \
 ) : FreeSub( \
-    subString2, x=subXpos, y=((subYpos + subHaloSize) * subFactor), \
-    font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
-    align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
-    size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
+	subString2, x=subXpos, y=((subYpos + subHaloSize) * subFactor), \
+	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
+	align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
+	size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
 )
 
-Trim(0, trimframe)
-halffps ? SelectOdd : 0
+Trim(0, trimFrame)
+halfFPS ? SelectOdd : 0
 
 #	Youtube can't hanble fps above 60
 hd && (last.FrameRate > 60) ? ChangeFPS(60) : 0
