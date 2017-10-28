@@ -122,7 +122,7 @@ originalWidth = last.width
 originalHeight = last.height
 
 #	Pick logo file
-file = hd \
+file = hd || hq \
 	? vb \
 		? "logoGrey.png" \
 		: stackNDS \
@@ -187,7 +187,7 @@ f = AudioDub(d, e).Lanczos4Resize(g.width, g.height)
 f ++ g
 
 #	Subtitles variables
-factor  	= hd ? last.width / originalWidth : 1
+factor  	= hd || hq ? last.width / originalWidth : 1
 subXpos 	= (subAlign == 7) ? (2 * factor) : \
 			  (subAlign == 8) ? last.width / 2 : \
 			  last.width - (2 * factor)

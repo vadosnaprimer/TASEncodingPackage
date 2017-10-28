@@ -13,6 +13,7 @@ setlocal enableextensions
 ".\programs\replacetext" "encode.avs" "pass = 2" "pass = 0"
 ".\programs\replacetext" "encode.avs" "i444 = true" "i444 = false"
 ".\programs\replacetext" "encode.avs" "hd = true" "hd = false"
+".\programs\replacetext" "encode.avs" "hq = true" "hq = false"
 ".\programs\replacetext" "encode.avs" "vb = true" "vb = false"
 
 :: Uncomment for a VirtualBoy encode
@@ -201,6 +202,7 @@ for /f %%k in ('%~dp0programs\div %fps%') do (set double=%%k)
 goto Defaults
 
 : ExtraHQ
+".\programs\replacetext" "encode.avs" "hq = false" "hq = true"
 :: Extra 10bit444 ::
 :: Audio ::
 ".\programs\avs2pipemod" -wav encode.avs | ".\programs\opusenc" --bitrate 64 - ".\temp\audio_extra.opus"
@@ -245,4 +247,5 @@ for /f %%k in ('%~dp0programs\div %fps%') do (set double=%%k)
 ".\programs\replacetext" "encode.avs" "pass = 2" "pass = 0"
 ".\programs\replacetext" "encode.avs" "i444 = true" "i444 = false"
 ".\programs\replacetext" "encode.avs" "hd = true" "hd = false"
+".\programs\replacetext" "encode.avs" "hq = true" "hq = false"
 ".\programs\replacetext" "encode.avs" "vb = true" "vb = false"
