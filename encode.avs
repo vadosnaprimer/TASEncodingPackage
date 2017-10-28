@@ -28,6 +28,7 @@ rerecords = "0"
 subFF = 600			# first subtitles frame, set manually!
 subAlign = 8		# subtitles alignment (7/8/9)
 subYpos = 0			# subtitles vertical position
+subFont = "helv"	# see "fonts" folder for available types
 bighaloCutoff = 480	# width above this will use bighalo instead of freesub
 
 #	Multisegment import (upscales hires segments straight to HD when needed)
@@ -97,15 +98,20 @@ audio = \
 
 ConvertToRGB32()
 
+#	Add 1 scanline if height is uneven (ntsc sms, pal c64)
+last.height % 2 > 0 ? StackVertical(last, Crop(0, Height-1, 0, 0)) : 0
+
+pass = 0
+i444 = false
+originalWidth = last.width
+originalHeight = last.height
+
 root = ScriptDir()
 Import     (root + "programs\functions.avsi")
 LoadPlugin (root + "programs\ExactDedup.dll")
 LoadPlugin (root + "programs\mvtools2.dll")
 LoadPlugin (root + "programs\mt_masktools-26.dll")
 LoadCPlugin(root + "programs\freesub.dll")
-
-#	Add 1 scanline if height is uneven (ntsc sms, pal c64)
-last.height % 2 > 0 ? StackVertical(last, Crop(0, Height-1, 0, 0)) : 0
 
 #	Deblink (uncomment corresponding variables above)
 # hd && blend ? ngdb ? ng_deblink(0.5) : TasBlend() : 0
@@ -115,11 +121,6 @@ last.height % 2 > 0 ? StackVertical(last, Crop(0, Height-1, 0, 0)) : 0
 left = vb ? Crop(  0, 0, 384, 224).Levels(0, 1, 255, 0, 157) : 0
 right= vb ? Crop(384, 0, 384, 224).Levels(0, 1, 255, 0, 157) : 0
 vb ? hd ? 0 : Anaglyph(left, right, "grey").AudioDub(left) : 0
-
-pass = 0
-i444 = false
-originalWidth = last.width
-originalHeight = last.height
 
 #	Pick logo file
 file = hd || hq \
@@ -187,6 +188,13 @@ f = AudioDub(d, e).Lanczos4Resize(g.width, g.height)
 f ++ g
 
 #	Subtitles variables
+subString1	= game + "\n" \
+			+ ((branch == "''") ? "" : (branch + "\n")) \
+			+ "Played by " + author \
+			+ "\nPlaying time: " + time \
+			+ "\nRerecord count: " + rerecords	
+subString2	= "This is a tool-\nassisted recording." \
+			+ "\nFor details, visit\nhttp://TASVideos.org/"
 factor  	= hd || hq ? last.width / originalWidth : 1
 subXpos 	= (subAlign == 7) ? (2 * factor) : \
 			  (subAlign == 8) ? last.width / 2 : \
@@ -199,19 +207,11 @@ subSize 	= last.width > bighaloCutoff \
 			: (last.width <= 480) ? 14 \
 			: (last.width <= 640) ? 18 : 24
 subHaloSize = floor(subSize / 4)
-subFont 	= "helv"	# set manually to whatever you like
 subFontName = subFont + (last.width <= 240 ? "R" : "B")
 subFontFile = "./fonts/" + subFontName + string(subSize) + ".bdf"
 subLength	= int(last.FrameRate * 5)
 subFF		= vb && hd ? subFF - int(last.FrameRate * 2) : subFF 
 subFF2		= SubFF + subLength + 1
-subString1	= game + "\n" \
-			+ ((branch == "''") ? "" : (branch + "\n")) \
-			+ "Played by " + author \
-			+ "\nPlaying time: " + time \
-			+ "\nRerecord count: " + rerecords	
-subString2	= "This is a tool-\nassisted recording." \
-			+ "\nFor details, visit\nhttp://TASVideos.org/"
 subFactor	= last.height / originalHeight
 subColor	= vb ? $009D9D9D : $00FFFFFF
 subRadius	= hd ? 0 : subHaloSize
