@@ -41,9 +41,9 @@ ms_format = "%1.0f"	# string format: http://avisynth.nl/index.php/Internal_funct
 #	Extra HQ (upscaled downloadable encodes)
 hq = false			# auto
 hq_scale = 2		# manual for now
-hq_hiResSrc = false	# hires 3D source needs downscaling, lowres pixelated source needs upscaling
-hq_baseWidth = 320	# when downscaling is needed, put native width of the console here
-hq_baseHeight = 240	# when downscaling is needed, put native height of the console here
+hq_hiResSrc = false	# we downscale hires 3D source, and upscale lowres pixelated source
+hq_baseWidth = 320	# aspect-corrected 1x width (only for hires source)
+hq_baseHeight = 240	# aspect-corrected 1x height (only for hires source)
 
 #	Aspect ratio correction
 wAspect = 4
@@ -118,7 +118,7 @@ vb ? hd ? 0 : Anaglyph(left, right, "grey").AudioDub(left) : 0
 
 pass = 0
 i444 = false
-originalWidth  = last.width
+originalWidth = last.width
 originalHeight = last.height
 
 #	Pick logo file
@@ -157,11 +157,24 @@ height = (height % 4 == 1) ? height + 3 : \
 		 (height % 4 == 3) ? height + 1 : height
 
 #	Rescaling
-g = hd \
-	? PointResize(width, height) \
-	: handHeld || pass != 0 \
-		? last \
-		: LanczosResize(width, height, taps=2)
+#	hd: pointresize to 4K, then just subsample with lanczos in the end
+#	handheld and primary (dedupped): do nothing
+#	512kb: do ARC with lanczos
+#	extra HQ:
+#		hires source: downscale straight to aspect-corrected res with lanczos
+#		lowres source: upscalse by our factor with point, then do ARC with lanczos for 512kb
+g = hq \
+	? hq_hiResSrc \
+		? Lanczos4Resize(hq_baseWidth * hq_scale, hq_baseHeight * hq_scale) \
+		: handHeld || pass != 0 \
+			? PointResize(last.width * hq_scale, last.height * hq_scale) \
+			: PointResize(last.width * hq_scale, last.height * hq_scale) \
+				.Lanczos4Resize(width * hq_scale, height * hq_scale) \
+	: hd \
+		? PointResize(width, height) \
+		: handHeld || pass != 0 \
+			? last \
+			: Lanczos4Resize(width, height)
 
 #	If ms enabled, we use parameters of "g" to apply to all segments
 g = ms ? g.AppendSegment(ms_base, ms_start, ms_end, ms_format, hd) : g
@@ -170,7 +183,7 @@ g = ms ? g.AppendSegment(ms_base, ms_start, ms_end, ms_format, hd) : g
 d = ImageSource(file=file, start=0, end=int((g.FrameRate * 2) - 1), fps=g.FrameRate) \
 	.ConvertToRGB32().AssumeFPS(g.FrameRateNumerator, g.FrameRateDenominator)
 e = BlankClip(d, audio_rate=g.AudioRate, channels=g.AudioChannels)
-f = AudioDub(d, e).LanczosResize(g.width, g.height, taps=2)
+f = AudioDub(d, e).Lanczos4Resize(g.width, g.height)
 f ++ g
 
 #	Subtitles variables
@@ -268,7 +281,7 @@ ConvertToYV24(chromaresample="point", matrix=(hd ? "Rec709" : "PC.601"))
 
 #	YV12 reduces chroma, so we use "lanczos" even for HD
 #	http://tasvideos.org/forum/viewtopic.php?t=19426
-i444 ? 0 : ConvertToYV12(chromaresample="lanczos", matrix=(hd \
+i444 ? last : ConvertToYV12(chromaresample="lanczos", matrix=(hd \
 	? "Rec709" \
 	: (pass == 0 \
 		? "Rec601" \
