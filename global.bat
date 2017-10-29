@@ -53,7 +53,7 @@ echo Press 2 for  4:3 (CRT TV)
 echo Press 3 for 16:9 (LCD TV)
 echo Press 4 to enter your own
 echo.
-set /p ANSWER=Choice? 
+set /p ANSWER=
 if "%ANSWER%"=="1" goto handHeld_SAR
 if "%ANSWER%"=="2" (
 set ar_w=4
@@ -87,7 +87,7 @@ goto TV Sar
 for /f "tokens=2 skip=2 delims== " %%G in ('find "wAspect = " "%~dp0encode.avs"') do (set current_wAspect=%%G)
 ".\programs\replacetext" "encode.avs" "wAspect = %current_wAspect%" "wAspect = %ar_w%"
 for /f "tokens=2 skip=2 delims== " %%G in ('find "hAspect = " "%~dp0encode.avs"') do (set current_hAspect=%%G)
-".\programs\replacetext" "encode.avs" "hAspect = %current_hAspect%" "hAspect = %ar_h%")
+".\programs\replacetext" "encode.avs" "hAspect = %current_hAspect%" "hAspect = %ar_h%"
 ".\programs\replacetext" "encode.avs" "handHeld = true" "handHeld = false"
 ".\programs\replacetext" "encode.avs" "pass = 0" "pass = 1"
 ".\programs\avs2pipemod" -info encode.avs > ".\temp\info.txt"
