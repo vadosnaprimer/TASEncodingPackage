@@ -29,7 +29,7 @@ subFF = 600			# first subtitles frame, set manually!
 subAlign = 8		# subtitles alignment (7/8/9)
 subYpos = 0			# subtitles vertical position
 subFont = "helv"	# see "fonts" folder for available types
-bighaloCutoff = 400	# width and height above this will use bighalo instead of freesub
+bighaloCutoff = 384	# width and height above this will use bighalo instead of freesub
 
 #	Multisegment import (upscales hires segments straight to HD when needed)
 #	requires normally importing a sample whose attributes it will use for all segments
@@ -163,7 +163,7 @@ height = height % 4 == 1 ? height + 3 : \
 #	extra HQ:
 #		hires source: downscale straight to aspect-corrected res with lanczos
 #		lowres source: upscalse by our factor with point, then do ARC with lanczos for 512kb
-g = hq \
+g = hq && !hd \
 	? hq_hiResSrc \
 		? Lanczos4Resize(hq_baseWidth * hq_scale, hq_baseHeight * hq_scale) \
 		: handHeld || pass != 0 \
@@ -195,7 +195,7 @@ biggerSide  = last.height > last.width ? last.height : last.width
 
 #	use bighalo if we're relatively hires
 #	or if font stretch on some side is too heavy (ARCed primary)
-useBighalo  = smallerSide > bighaloCutoff \
+useBighalo  = biggerSide > bighaloCutoff \
 			|| ((wStretch < 0.8 || wStretch > 1.3) && !handHeld && pass != 0)
 
 #	Subtitles variables
@@ -216,9 +216,10 @@ subSize 	= useBighalo ? subRatio \
 			: subRatio < 10 ?  8 \
 			: subRatio < 12 ? 10 \
 			: subRatio < 14 ? 12 \
-			: subRatio < 18 ? 14 : 24
-subWidth	= useBighalo && !hd ? float(subSize) / 2 * wStretch : 0
-subHaloSize = subSize < 10 ? 2 : floor(subSize / 5)
+			: subRatio < 18 ? 14 \
+			: subRatio < 24 ? 18 : 24
+subWidth	= useBighalo && !hd ? float(subSize) / 2.323 * wStretch : 0
+subHaloSize = useBighalo ? floor(subSize / 7) : floor(subSize / 4.5)
 subFontName = subFont + (smallerSide < 224 ? "R" : "B")
 subFontFile = "./fonts/" + subFontName + string(subSize) + ".bdf"
 subLength	= int(last.FrameRate * 5)
