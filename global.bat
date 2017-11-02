@@ -119,6 +119,7 @@ echo Press 2 for Compatibility MP4.
 echo Press 3 for HD Stream.
 echo Press 4 for All of the above.
 echo Press 5 for extra HQ encodes.
+echo.
 
 : Set_choice
 set /p EncodeChoice=
@@ -166,7 +167,6 @@ echo.
 echo ----------------------
 echo  Generating timecodes 
 echo ----------------------
-echo.
 :: Timecodes ::
 ".\programs\replacetext" "encode.avs" "pass = 0" "pass = 1"
 ".\programs\avs2pipemod" -benchmark encode.avs
@@ -187,6 +187,7 @@ echo.
 : 512kb
 :: Audio ::
 ".\programs\avs2pipemod" -wav encode.avs | ".\programs\qaac64" -v 0 --he -q 2 --delay -5187s --threading --no-smart-padding - -o ".\temp\audio.mp4"
+echo.
 echo -------------------------------
 echo  Encoding Archive 512kb stream 
 echo -------------------------------
@@ -229,6 +230,7 @@ echo.
 :: Extra 512kb ::
 :: Audio ::
 ".\programs\avs2pipemod" -wav encode.avs | ".\programs\sox" -t wav - -t wav - trim 4672s | ".\programs\neroAacEnc" -q 0.25 -if - -of ".\temp\audio_extra.mp4"
+echo.
 echo -------------------------------
 echo  Encoding ExtraHQ stream 
 echo -------------------------------

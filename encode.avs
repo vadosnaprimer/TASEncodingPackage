@@ -29,14 +29,14 @@ subFF = 600			# first subtitles frame, set manually!
 subAlign = 8		# subtitles alignment (7/8/9)
 subYpos = 0			# subtitles vertical position
 subFont = "helv"	# see "fonts" folder for available types
-bighaloCutoff = 480	# width above this will use bighalo instead of freesub
+bighaloCutoff = 400	# width and height above this will use bighalo instead of freesub
 
 #	Multisegment import (upscales hires segments straight to HD when needed)
 #	requires normally importing a sample whose attributes it will use for all segments
 ms = false			# enable multisegment import
 ms_base = "movie_"	# common string for all segment names
 ms_start = 0		# number of the first segment
-ms_end = 117		# number of the first segment
+ms_end = 15			# number of the first segment
 ms_format = "%1.0f"	# string format: http://avisynth.nl/index.php/Internal_functions#String
 
 #	Extra HQ (upscaled downloadable encodes)
@@ -104,7 +104,6 @@ last.height % 2 > 0 ? StackVertical(last, Crop(0, Height-1, 0, 0)) : 0
 pass = 0
 i444 = false
 originalWidth = last.width
-originalHeight = last.height
 
 root = ScriptDir()
 Import     (root + "programs\functions.avsi")
@@ -118,8 +117,8 @@ LoadCPlugin(root + "programs\freesub.dll")
 
 #	VirtualBoy (bizhawk only!)
 #	http://tasvideos.org/forum/viewtopic.php?p=435440#435440
-left = vb ? Crop(  0, 0, 384, 224).Levels(0, 1, 255, 0, 157) : 0
-right= vb ? Crop(384, 0, 384, 224).Levels(0, 1, 255, 0, 157) : 0
+left  = vb ? Crop(  0, 0, 384, 224).Levels(0, 1, 255, 0, 157) : 0
+right = vb ? Crop(384, 0, 384, 224).Levels(0, 1, 255, 0, 157) : 0
 vb ? hd ? 0 : Anaglyph(left, right, "grey").AudioDub(left) : 0
 
 #	Pick logo file
@@ -128,10 +127,10 @@ file = hd || hq \
 		? "logoGrey.png" \
 		: stackNDS \
 			? "logohdnds.png" \
-			: (last.height == 384) \
+			: last.height == 384 \
 				? "logonds.png" \
 				: "hdlogo.png" \
-	: (last.height == 384) \
+	: last.height == 384 \
 		? "logonds.png" \
 		: "logo.png"
 
@@ -144,18 +143,18 @@ stackNDS && hd ? StackHorizontal(halfScreen.PointResize(last.width*2, last.heigh
 #	Aspect ratio correction
 height = hd \
 	? 2160 \
-	: last.width > (last.height * wAspect / hAspect) \
-		? (last.width * hAspect / wAspect) \
+	: last.width > last.height * wAspect / hAspect \
+		? last.width * hAspect / wAspect \
 		: last.height
 width = handHeld \
 	? height * last.width / last.height \
 	: height * wAspect / hAspect
-width  = (width  % 4 == 1) ? width  + 3 : \
-		 (width  % 4 == 2) ? width  + 2 : \
-		 (width  % 4 == 3) ? width  + 1 : width
-height = (height % 4 == 1) ? height + 3 : \
-		 (height % 4 == 2) ? height + 2 : \
-		 (height % 4 == 3) ? height + 1 : height
+width  = width  % 4 == 1 ? width  + 3 : \
+		 width  % 4 == 2 ? width  + 2 : \
+		 width  % 4 == 3 ? width  + 1 : width
+height = height % 4 == 1 ? height + 3 : \
+		 height % 4 == 2 ? height + 2 : \
+		 height % 4 == 3 ? height + 1 : height
 
 #	Rescaling
 #	hd: pointresize to 4K, then just subsample with lanczos in the end
@@ -187,32 +186,44 @@ e = BlankClip(d, audio_rate=g.AudioRate, channels=g.AudioChannels)
 f = AudioDub(d, e).Lanczos4Resize(g.width, g.height)
 f ++ g
 
+#	Additional subtitle magic
+#	figure out how much our font will be stretched after x264 ARC
+factor  	= hd || hq ? last.width / originalWidth : 1
+wStretch	= (float(last.width) / last.height) / (float(wAspect) / hAspect)
+smallerSide = last.height < last.width ? last.height : last.width
+biggerSide  = last.height > last.width ? last.height : last.width
+
+#	use bighalo if we're relatively hires
+#	or if font stretch on some side is too heavy (ARCed primary)
+useBighalo  = smallerSide > bighaloCutoff \
+			|| ((wStretch < 0.8 || wStretch > 1.3) && !handHeld && pass != 0)
+
 #	Subtitles variables
+subRatio	= float(last.height) / 21
 subString1	= game + "\n" \
-			+ ((branch == "''") ? "" : (branch + "\n")) \
+			+ (branch == "''" ? "" : branch + "\n") \
 			+ "Played by " + author \
 			+ "\nPlaying time: " + time \
 			+ "\nRerecord count: " + rerecords	
 subString2	= "This is a tool-\nassisted recording." \
 			+ "\nFor details, visit\nhttp://TASVideos.org/"
-factor  	= hd || hq ? last.width / originalWidth : 1
-subXpos 	= (subAlign == 7) ? (2 * factor) : \
-			  (subAlign == 8) ? last.width / 2 : \
-			  last.width - (2 * factor)
+subXpos 	= subAlign == 7 ? 2 * factor : \
+			  subAlign == 8 ? last.width / 2 : \
+			  last.width - 2 * factor
 subXpos 	= hd && vb ? subXpos / 2 : subXpos
-subSize 	= last.width > bighaloCutoff \
-			? last.height < last.width ? last.height / 21 : last.width / 21 \
-			: (last.width <= 240) ?  8 \
-			: (last.width <= 384) ? 10 \
-			: (last.width <= 480) ? 14 \
-			: (last.width <= 640) ? 18 : 24
-subHaloSize = floor(subSize / 4)
-subFontName = subFont + (last.width <= 240 ? "R" : "B")
+subYpos		= int(float(subYpos) / wStretch) * factor
+subSize 	= useBighalo ? subRatio \
+			: subRatio < 10 ?  8 \
+			: subRatio < 12 ? 10 \
+			: subRatio < 14 ? 12 \
+			: subRatio < 18 ? 14 : 24
+subWidth	= useBighalo && !hd ? float(subSize) / 2 * wStretch : 0
+subHaloSize = subSize < 10 ? 2 : floor(subSize / 5)
+subFontName = subFont + (smallerSide < 224 ? "R" : "B")
 subFontFile = "./fonts/" + subFontName + string(subSize) + ".bdf"
 subLength	= int(last.FrameRate * 5)
 subFF		= vb && hd ? subFF - int(last.FrameRate * 2) : subFF 
 subFF2		= SubFF + subLength + 1
-subFactor	= last.height / originalHeight
 subColor	= vb ? $009D9D9D : $00FFFFFF
 subRadius	= hd ? 0 : subHaloSize
 
@@ -220,64 +231,64 @@ subRadius	= hd ? 0 : subHaloSize
 left = hd && vb ? \
 	   f.PointResize(last.width / 2, last.height) ++ \
 	left.PointResize(last.width / 2, last.height).ng_bighalo( \
-		subString1, x=subXpos, y=(subYpos * subFactor), \
-		align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
+		subString1, x=subXpos, y=subYpos, align=subAlign, \
+		first_frame=subFF, last_frame=(subFF+subLength), \
 		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
 	).ng_bighalo( \
-		subString2, x=subXpos, y=(subYpos * subFactor), \
-		align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
+		subString2, x=subXpos, y=subYpos, align=subAlign, \
+		first_frame=subff2, last_frame=(subff2+SubLength), \
 		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
 	) : 0
 
 right = hd && vb ? \
 	    f.PointResize(last.width / 2, last.height) ++ \
 	right.PointResize(last.width / 2, last.height).ng_bighalo( \
-		subString1, x=subXpos, y=(subYpos * subFactor), \
-		align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
+		subString1, x=subXpos, y=subYpos, \
+		align=subAlign, first_frame=subFF, last_frame=subFF+subLength, \
 		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
 	).ng_bighalo( \
-		subString2, x=subXpos, y=(subYpos * subFactor), \
-		align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
+		subString2, x=subXpos, y=subYpos, \
+		align=subAlign, first_frame=subff2, last_frame=subff2+SubLength, \
 		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
 	) : 0
 
 hd && vb ? yt3d(left, right).AudioDub(left) : 0
 
 #	Subtitles functions
-(last.width > bighaloCutoff) ? vb ? 0 : ng_bighalo( \
-	subString1, x=subXpos, y=(subYpos * subFactor), align=subAlign, \
-	first_frame=subFF, last_frame=(subFF + subLength), size=subSize, \
+useBighalo ? vb ? 0 : ng_bighalo( \
+	subString1, x=subXpos, y=subYpos, align=subAlign, first_frame=subFF, \
+	last_frame=subFF+subLength, size=subSize, font_width=subWidth, \
 	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius \
 ) : FreeSub( \
-	subString1, x=subXpos, y=((subYpos + subHaloSize) * subFactor), \
+	subString1, x=subXpos, y=subYpos+subHaloSize, \
 	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
-	align=subAlign, first_frame=subFF, last_frame=(subFF + subLength), \
-	size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
+	align=subAlign, first_frame=subFF, last_frame=subFF+subLength, \
+	text_color=subColor, halo_color=$00000000, lsp=2 \
 )
 
-(last.width > bighaloCutoff) ? vb ? 0 : ng_bighalo( \
-	subString1, x=subXpos, y=(subYpos * subFactor), align=subAlign, \
-	first_frame=subFF, last_frame=(subFF + subLength), size=subSize, \
+useBighalo ? vb ? 0 : ng_bighalo( \
+	subString2, x=subXpos, y=subYpos, align=subAlign, first_frame=subff2, \
+	last_frame=subff2+subLength, size=subSize, font_width=subWidth, \
 	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius \
 ) : FreeSub( \
-	subString2, x=subXpos, y=((subYpos + subHaloSize) * subFactor), \
+	subString2, x=subXpos, y=subYpos+subHaloSize, \
 	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
-	align=subAlign, first_frame=subff2, last_frame=(subff2 + SubLength), \
-	size=subFactor, text_color=subColor, halo_color=$00000000, lsp=2 \
+	align=subAlign, first_frame=subff2, last_frame=subff2+SubLength, \
+	text_color=subColor, halo_color=$00000000, lsp=2 \
 )
 
 Trim(0, trimFrame)
 halfFPS ? SelectOdd : 0
 
 #	Youtube can't hanble fps above 60
-hd && (last.FrameRate > 60) ? ChangeFPS(60) : 0
+hd && last.FrameRate > 60 ? ChangeFPS(60) : 0
 
 #	YV24 conversion doesn't reduce chroma, so "point" is fine
 ConvertToYV24(chromaresample="point", matrix=(hd ? "Rec709" : "PC.601"))
 
 #	Remove duplicate frames for primary
-(pass == 1) ? ExactDedup(firstpass=true, dupinfo="./temp/dup.txt",times="./temp/times.txt") : 0
-(pass == 2) ? ExactDedup(firstpass=false,dupinfo="./temp/dup.txt"                         ) : 0
+pass == 1 ? ExactDedup(firstpass=true, dupinfo="./temp/dup.txt",times="./temp/times.txt") : 0
+pass == 2 ? ExactDedup(firstpass=false,dupinfo="./temp/dup.txt"                         ) : 0
 
 #	YV12 reduces chroma, so we use "lanczos" even for HD
 #	http://tasvideos.org/forum/viewtopic.php?t=19426
