@@ -33,14 +33,14 @@ echo.
 if [%1]==[] goto SAR_OPTIONS
 if [%1]==[1] goto handHeld_SAR
 if [%1]==[2] (
-set ar_w=4
-set ar_h=3
-goto TV_SAR
+	set ar_w=4
+	set ar_h=3
+	goto TV_SAR
 )
 if [%1]==[3] (
-set ar_w=16
-set ar_h=9
-goto TV_SAR
+	set ar_w=16
+	set ar_h=9
+	goto TV_SAR
 )
 set aspect_ratio=%1
 goto Parse_AR
@@ -53,19 +53,21 @@ echo Press 2 for  4:3 (CRT TV)
 echo Press 3 for 16:9 (LCD TV)
 echo Press 4 to enter your own
 echo.
+
 set /p ANSWER=
 if "%ANSWER%"=="1" goto handHeld_SAR
 if "%ANSWER%"=="2" (
-set ar_w=4
-set ar_h=3
-goto TV_SAR
+	set ar_w=4
+	set ar_h=3
+	goto TV_SAR
 )
 if "%ANSWER%"=="3" (
-set ar_w=16
-set ar_h=9
-goto TV_SAR
+	set ar_w=16
+	set ar_h=9
+	goto TV_SAR
 )
 if "%ANSWER%"=="4" goto Get_AR
+
 echo I'm not kidding!
 goto SAR_OPTIONS
 
@@ -77,6 +79,7 @@ set /p aspect_ratio=Enter aspect ratio in the format width:height
 : Parse_AR
 for /f "tokens=1 delims=:" %%g in ('echo %aspect_ratio%') do (set /a "ar_w=%%g")
 for /f "tokens=2 delims=:" %%g in ('echo %aspect_ratio%') do (set /a "ar_h=%%g")
+
 if [%ar_w%]==[] goto Get_AR
 if [%ar_h%]==[] goto Get_AR
 if %ar_w% leq 0 goto Get_AR
@@ -88,14 +91,17 @@ for /f "tokens=2 skip=2 delims== " %%G in ('find "wAspect = " "%~dp0encode.avs"'
 ".\programs\replacetext" "encode.avs" "wAspect = %current_wAspect%" "wAspect = %ar_w%"
 for /f "tokens=2 skip=2 delims== " %%G in ('find "hAspect = " "%~dp0encode.avs"') do (set current_hAspect=%%G)
 ".\programs\replacetext" "encode.avs" "hAspect = %current_hAspect%" "hAspect = %ar_h%"
+
 ".\programs\replacetext" "encode.avs" "handHeld = true" "handHeld = false"
 ".\programs\replacetext" "encode.avs" "pass = 0" "pass = 1"
 ".\programs\avs2pipemod" -info encode.avs > ".\temp\info.txt"
+
 for /f "tokens=2" %%G in ('FIND "width" "%~dp0temp\info.txt"') do (set width=%%G)
 for /f "tokens=2" %%G in ('FIND "height" "%~dp0temp\info.txt"') do (set height=%%G)
 set /a "SAR_w=%ar_w% * %height%"
 set /a "SAR_h=%ar_h% * %width%"
 set VAR=%SAR_w%:%SAR_h%
+
 ".\programs\replacetext" "encode.avs" "pass = 1" "pass = 0"
 goto ENCODE_OPTIONS
 
@@ -127,10 +133,42 @@ if "%EncodeChoice%"=="1" goto 10bit444
 if "%EncodeChoice%"=="2" goto 512kb
 if "%EncodeChoice%"=="3" goto HD
 if "%EncodeChoice%"=="4" goto HD
-if "%EncodeChoice%"=="5" goto ExtraHQ
+if "%EncodeChoice%"=="5" goto ExtraHQ_scale
+
 echo.
 echo You better choose something real!
 goto Set_choice
+
+: ExtraHQ_scale
+".\programs\replacetext" "encode.avs" "hq = false" "hq = true"
+echo.
+echo What scale factor do you want to use? (2/3/4)
+echo.
+
+set /p ExtraScale=
+if "%ExtraScale%" GTR "1" (if "%ExtraScale%" LSS "5" goto ExtraHQ_type)
+echo.
+echo Uhhh... Seriously?
+goto ExtraHQ_scale
+
+: ExtraHQ_type
+for /f "tokens=2 skip=2 delims==<tab><space>" %%G in ('find "hq_scale = " "%~dp0encode.avs"') do (set current_scale=%%G)
+".\programs\replacetext" "encode.avs" "hq_scale = %current_scale%" "hq_scale = %ExtraScale%"
+
+echo.
+echo Which ExtraHQ encode type do you want to do?
+echo.
+echo Press 1 for Modern HQ MKV.
+echo Press 2 for Compatibility MP4.
+echo Press 3 both.
+echo.
+
+set /p ExtraType=
+if "%ExtraType%"=="1" goto ExtraHQ_10bit444
+if "%ExtraType%"=="2" goto ExtraHQ_512kb
+echo.
+echo C'mon! Let's finish this already!
+goto ExtraHQ_type
 
 : HD
 :: Audio ::
@@ -202,8 +240,7 @@ for /f %%k in ('%~dp0programs\div %fps%') do (set double=%%k)
 ".\programs\mp4box_x64" -hint -add ".\temp\video_512kb.h264":fps=%double% -add ".\temp\audio.mp4" -new ".\output\encode_512kb.mp4"
 goto Defaults
 
-: ExtraHQ
-".\programs\replacetext" "encode.avs" "hq = false" "hq = true"
+: ExtraHQ_10bit444
 :: Extra 10bit444 ::
 :: Audio ::
 ".\programs\avs2pipemod" -wav encode.avs | ".\programs\opusenc" --bitrate 64 - ".\temp\audio_extra.opus"
@@ -225,8 +262,9 @@ echo.
 ".\programs\replacetext" "encode.avs" "i444 = false" "i444 = true"
 ".\programs\avs2pipemod" -y4mp encode.avs | ".\programs\x264-10_x64" --threads auto --sar "%VAR%" --crf 20 --keyint 600 --preset veryslow --input-range pc --range pc --tcfile-in ".\temp\times.txt" -o ".\temp\video_extra.mkv" --colormatrix smpte170m --output-csp i444  --demuxer y4m -
 :: Muxing ::
-".\programs\mkvmerge" -o ".\output\encode_extra.mkv" --timecodes -1:".\temp\times.txt" ".\temp\video_extra.mkv" ".\temp\audio_extra.opus"
+".\programs\mkvmerge" -o ".\output\encode_%ExtraScale%x.mkv" --timecodes -1:".\temp\times.txt" ".\temp\video_extra.mkv" ".\temp\audio_extra.opus"
 
+: ExtraHQ_512kb
 :: Extra 512kb ::
 :: Audio ::
 ".\programs\avs2pipemod" -wav encode.avs | ".\programs\sox" -t wav - -t wav - trim 4672s | ".\programs\neroAacEnc" -q 0.25 -if - -of ".\temp\audio_extra.mp4"
@@ -242,7 +280,7 @@ echo.
 :: Muxing ::
 for /f "tokens=2" %%i in ('%~dp0programs\avs2pipemod -info %~dp0encode.avs ^|find "fps"') do (set fps=%%i)
 for /f %%k in ('%~dp0programs\div %fps%') do (set double=%%k)
-".\programs\mp4box_x64" -hint -add ".\temp\video_512kb_extra.h264":fps=%double% -add ".\temp\audio_extra.mp4" -new ".\output\encode_512kb_extra.mp4"
+".\programs\mp4box_x64" -hint -add ".\temp\video_%ExtraScale%x_512kb.h264":fps=%double% -add ".\temp\audio_extra.mp4" -new ".\output\encode_512kb_extra.mp4"
 
 : Defaults
 ".\programs\replacetext" "encode.avs" "pass = 1" "pass = 0"
