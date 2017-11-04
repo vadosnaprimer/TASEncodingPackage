@@ -189,7 +189,8 @@ f ++ g
 #	Additional subtitle magic
 #	figure out how much our font will be stretched after x264 ARC
 factor  	= hd || hq ? last.width / originalWidth : 1
-wStretch	= (float(last.width) / last.height) / (float(wAspect) / hAspect)
+wStretch	= handHeld || pass == 0 ? 1 \
+			: (float(last.width) / last.height) / (float(wAspect) / hAspect)
 smallerSide = last.height < last.width ? last.height : last.width
 biggerSide  = last.height > last.width ? last.height : last.width
 

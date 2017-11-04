@@ -152,7 +152,7 @@ echo Uhhh... Seriously?
 goto ExtraHQ_scale
 
 : ExtraHQ_type
-for /f "tokens=2 skip=2 delims==<tab><space>" %%G in ('find "hq_scale = " "%~dp0encode.avs"') do (set current_scale=%%G)
+for /f "tokens=3 skip=2" %%G in ('find "hq_scale = " "%~dp0encode.avs"') do (set current_scale=%%G)
 ".\programs\replacetext" "encode.avs" "hq_scale = %current_scale%" "hq_scale = %ExtraScale%"
 
 echo.
@@ -166,6 +166,7 @@ echo.
 set /p ExtraType=
 if "%ExtraType%"=="1" goto ExtraHQ_10bit444
 if "%ExtraType%"=="2" goto ExtraHQ_512kb
+if "%ExtraType%"=="3" goto ExtraHQ_10bit444
 echo.
 echo C'mon! Let's finish this already!
 goto ExtraHQ_type
@@ -243,7 +244,7 @@ goto Defaults
 : ExtraHQ_10bit444
 :: Extra 10bit444 ::
 :: Audio ::
-".\programs\avs2pipemod" -wav encode.avs | ".\programs\opusenc" --bitrate 64 - ".\temp\audio_extra.opus"
+".\programs\avs2pipemod" -wav encode.avs | ".\programs\sox" -t wav - -t wav - trim 0.0065 | ".\programs\opusenc" --bitrate 64 --padding 0 - ".\temp\audio_extra.opus"
 echo.
 echo ----------------------
 echo  Generating timecodes 
@@ -260,14 +261,15 @@ echo --------------------------------
 echo.
 :: Video ::
 ".\programs\replacetext" "encode.avs" "i444 = false" "i444 = true"
-".\programs\avs2pipemod" -y4mp encode.avs | ".\programs\x264-10_x64" --threads auto --sar "%VAR%" --crf 20 --keyint 600 --preset veryslow --input-range pc --range pc --tcfile-in ".\temp\times.txt" -o ".\temp\video_extra.mkv" --colormatrix smpte170m --output-csp i444  --demuxer y4m -
+".\programs\avs2pipemod" -y4mp encode.avs | ".\programs\x264-10_x64" --threads auto --sar "%VAR%" --crf 20 --keyint 600 --preset veryslow --input-range pc --range pc --tcfile-in ".\temp\times.txt" -o ".\temp\video_%ExtraScale%x.mkv" --colormatrix smpte170m --output-csp i444  --demuxer y4m -
 :: Muxing ::
-".\programs\mkvmerge" -o ".\output\encode_%ExtraScale%x.mkv" --timecodes -1:".\temp\times.txt" ".\temp\video_extra.mkv" ".\temp\audio_extra.opus"
+".\programs\mkvmerge" -o ".\output\encode_%ExtraScale%x.mkv" --timecodes -1:".\temp\times.txt" ".\temp\video_%ExtraScale%x.mkv" ".\temp\audio_extra.opus"
+if "%ExtraType%" NEQ "3" goto Defaults
 
 : ExtraHQ_512kb
 :: Extra 512kb ::
 :: Audio ::
-".\programs\avs2pipemod" -wav encode.avs | ".\programs\sox" -t wav - -t wav - trim 4672s | ".\programs\neroAacEnc" -q 0.25 -if - -of ".\temp\audio_extra.mp4"
+".\programs\avs2pipemod" -wav encode.avs | ".\programs\qaac64" -v 0 --he -q 2 --delay -5187s --threading --no-smart-padding - -o ".\temp\audio_extra.mp4"
 echo.
 echo -------------------------------
 echo  Encoding ExtraHQ stream 
@@ -276,11 +278,12 @@ echo.
 :: Video ::
 ".\programs\replacetext" "encode.avs" "pass = 2" "pass = 0"
 ".\programs\replacetext" "encode.avs" "i444 = true" "i444 = false"
-".\programs\avs2pipemod" -y4mp encode.avs | ".\programs\x264_x64" --threads auto --crf 20 --keyint 600 --preset veryslow --range tv --input-range tv --colormatrix smpte170m -o ".\temp\video_512kb_extra.h264" --demuxer y4m -
+".\programs\avs2pipemod" -y4mp encode.avs | ".\programs\x264_x64" --threads auto --crf 20 --keyint 600 --preset veryslow --range tv --input-range tv --colormatrix smpte170m -o ".\temp\video_%ExtraScale%x_512kb.h264" --demuxer y4m -
 :: Muxing ::
 for /f "tokens=2" %%i in ('%~dp0programs\avs2pipemod -info %~dp0encode.avs ^|find "fps"') do (set fps=%%i)
 for /f %%k in ('%~dp0programs\div %fps%') do (set double=%%k)
-".\programs\mp4box_x64" -hint -add ".\temp\video_%ExtraScale%x_512kb.h264":fps=%double% -add ".\temp\audio_extra.mp4" -new ".\output\encode_512kb_extra.mp4"
+".\programs\mp4box_x64" -hint -add ".\temp\video_%ExtraScale%x_512kb.h264":fps=%double% -add ".\temp\audio_extra.mp4" -new ".\output\encode_%ExtraScale%x_512kb.mp4"
+goto Defaults
 
 : Defaults
 ".\programs\replacetext" "encode.avs" "pass = 1" "pass = 0"
