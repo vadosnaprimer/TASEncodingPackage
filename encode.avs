@@ -214,7 +214,7 @@ subXpos 	= subAlign == 7 ? 2 * factor : \
 			  subAlign == 8 ? last.width / 2 : \
 			  last.width - 2 * factor
 subXpos 	= hd && vb ? subXpos / 2 : subXpos
-subYpos		= int(float(subYpos) / wStretch) * factor
+subYpos		= int(float(subYpos) / (wStretch < 1 ? 1 : wStretch)) * factor
 subSize 	= useBighalo ? subRatio \
 			: subRatio < 10 ?  8 \
 			: subRatio < 12 ? 10 \
