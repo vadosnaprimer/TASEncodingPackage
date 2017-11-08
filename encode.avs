@@ -197,7 +197,9 @@ biggerSide  = last.height > last.width ? last.height : last.width
 #	use bighalo if we're relatively hires
 #	or if font stretch on some side is too heavy (ARCed primary)
 useBighalo  = biggerSide > bighaloCutoff \
-			|| ((wStretch < 0.8 || wStretch > 1.3) && !handHeld && pass != 0)
+			|| ((wStretch < 0.8 || wStretch > 1.3) \
+			&& !handHeld && pass != 0 \
+			&& smallerSide >= 224)
 
 #	Subtitles variables
 subRatio	= float(last.height) / 21
