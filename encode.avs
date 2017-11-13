@@ -50,6 +50,15 @@ hq_baseHeight = 240	# aspect-corrected 1x height (only for hires source)
 wAspect = 4
 hAspect = 3
 
+#	Subtitles text
+subString1	= game + "\n" \
+			+ (branch == "''" ? "" : branch + "\n") \
+			+ "Played by " + author \
+			+ "\nPlaying time:\n " + time \
+			+ "\nRerecord count:\n " + rerecords	
+subString2	= "This is a tool-\nassisted recording." \
+			+ "\nFor details, visit\nhttp://TASVideos.org/"
+
 ################
 # LEGACY STUFF #
 ################
@@ -104,6 +113,7 @@ last.height % 2 > 0 ? StackVertical(last, Crop(0, Height-1, 0, 0)) : 0
 pass = 0
 i444 = false
 originalWidth = last.width
+originalHeight = last.height
 
 root = ScriptDir()
 Import     (root + "programs\functions.avsi")
@@ -188,7 +198,8 @@ f ++ g
 
 #	Additional subtitle magic
 #	figure out how much our font will be stretched after x264 ARC
-factor  	= hd || hq ? last.width / originalWidth : 1
+wFactor  	= hd || hq ? last.width  / originalWidth  : 1
+hFactor		= hd || hq ? last.height / originalHeight : 1
 wStretch	= handHeld || pass == 0 ? 1 \
 			: (float(last.width) / last.height) / (float(wAspect) / hAspect)
 smallerSide = last.height < last.width ? last.height : last.width
@@ -203,18 +214,11 @@ useBighalo  = biggerSide > bighaloCutoff \
 
 #	Subtitles variables
 subRatio	= float(last.height) / 21
-subString1	= game + "\n" \
-			+ (branch == "''" ? "" : branch + "\n") \
-			+ "Played by " + author \
-			+ "\nPlaying time: " + time \
-			+ "\nRerecord count: " + rerecords	
-subString2	= "This is a tool-\nassisted recording." \
-			+ "\nFor details, visit\nhttp://TASVideos.org/"
-subXpos 	= subAlign == 7 ? 2 * factor : \
+subXpos 	= subAlign == 7 ? 2 * wFactor : \
 			  subAlign == 8 ? last.width / 2 : \
-			  last.width - 2 * factor
+			  last.width - 2 * wFactor
 subXpos 	= hd && vb ? subXpos / 2 : subXpos
-subYpos		= int(float(subYpos) / (wStretch < 1 ? 1 : wStretch)) * factor
+subYpos		= int(float(subYpos) / wStretch * hFactor)
 subSize 	= useBighalo ? subRatio \
 			: subRatio < 10 ?  8 \
 			: subRatio < 12 ? 10 \
@@ -226,7 +230,7 @@ subHaloSize = useBighalo ? floor(subSize / 7) : floor(subSize / 4.5)
 subFontName = subFont + (smallerSide < 224 ? "R" : "B")
 subFontFile = "./fonts/" + subFontName + string(subSize) + ".bdf"
 subLength	= int(last.FrameRate * 5)
-subFF		= vb && hd ? subFF - int(last.FrameRate * 2) : subFF 
+subFF		= vb && hd ? subFF - int(last.FrameRate * 2) : subFF
 subFF2		= SubFF + subLength + 1
 subColor	= vb ? $009D9D9D : $00FFFFFF
 subRadius	= hd ? 0 : subHaloSize
