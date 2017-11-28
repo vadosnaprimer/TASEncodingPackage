@@ -198,8 +198,8 @@ f ++ g
 
 #	Additional subtitle magic
 #	figure out how much our font will be stretched after x264 ARC
-wFactor  	= hd || hq ? last.width  / originalWidth  : 1
-hFactor		= hd || hq ? last.height / originalHeight : 1
+wFactor  	= hd || hq ? float(last.width)  / originalWidth  : 1
+hFactor		= hd || hq ? float(last.height) / originalHeight : 1
 wStretch	= handHeld || pass == 0 ? 1 \
 			: (float(last.width) / last.height) / (float(wAspect) / hAspect)
 smallerSide = last.height < last.width ? last.height : last.width
@@ -218,7 +218,7 @@ subXpos 	= subAlign == 7 ? 2 * wFactor : \
 			  subAlign == 8 ? last.width / 2 : \
 			  last.width - 2 * wFactor
 subXpos 	= hd && vb ? subXpos / 2 : subXpos
-subYpos		= int(float(subYpos) / wStretch * hFactor)
+subYpos		= int(float(subYpos) / (wStretch > 1 ? wStretch : 1) * hFactor)
 subSize 	= useBighalo ? subRatio \
 			: subRatio < 10 ?  8 \
 			: subRatio < 12 ? 10 \
