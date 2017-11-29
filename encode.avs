@@ -227,6 +227,7 @@ subSize 	= useBighalo ? subRatio \
 			: subRatio < 24 ? 18 : 24
 subWidth	= useBighalo && !hd ? float(subSize) / 2.323 * wStretch : 0
 subHaloSize = useBighalo ? floor(subSize / 7) : floor(subSize / 4.5)
+subHaloSize = subHaloSize < 2 ? 2 : subHaloSize
 subFontName = subFont + (smallerSide < 224 ? "R" : "B")
 subFontFile = "./fonts/" + subFontName + string(subSize) + ".bdf"
 subLength	= int(last.FrameRate * 5)
