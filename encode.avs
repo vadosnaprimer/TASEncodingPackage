@@ -151,20 +151,22 @@ halfScreen = upperScreen	# set which NDS screen to put as main
 stackNDS && hd ? StackHorizontal(halfScreen.PointResize(last.width*2, last.height), last) : 0
 
 #	Aspect ratio correction
-height = hd \
-	? 2160 \
-	: last.width > last.height * wAspect / hAspect \
+height	= last.width > last.height * wAspect / hAspect \
 		? last.width * hAspect / wAspect \
 		: last.height
-width = handHeld \
-	? height * last.width / last.height \
-	: height * wAspect / hAspect
-width  = width  % 4 == 1 ? width  + 3 : \
-		 width  % 4 == 2 ? width  + 2 : \
-		 width  % 4 == 3 ? width  + 1 : width
-height = height % 4 == 1 ? height + 3 : \
-		 height % 4 == 2 ? height + 2 : \
-		 height % 4 == 3 ? height + 1 : height
+width	= handHeld \
+		? height * last.width / last.height \
+		: height * wAspect / hAspect
+width	= width  % 4 == 1 ? width  + 3 : \
+		  width  % 4 == 2 ? width  + 2 : \
+		  width  % 4 == 3 ? width  + 1 : width
+height	= height % 4 == 1 ? height + 3 : \
+		  height % 4 == 2 ? height + 2 : \
+		  height % 4 == 3 ? height + 1 : height
+wARC	= width
+hARC	= height
+width	= hd ? width * (2160 / height) : width
+height	= hd ? 2160 : height
 
 #	Rescaling
 #	hd: pointresize to 4K, then just subsample with lanczos in the end
@@ -197,9 +199,9 @@ f = AudioDub(d, e).Lanczos4Resize(g.width, g.height)
 f ++ g
 
 #	Additional subtitle magic
-#	figure out how much our font will be stretched after x264 ARC
-wFactor  	= hd || hq ? float(last.width)  / originalWidth  : 1
-hFactor		= hd || hq ? float(last.height) / originalHeight : 1
+#	figure out how much our font will be changed after x264 ARC and for HD
+wFactor  	= hd || hq ? float(last.width)  / wARC : 1
+hFactor		= hd || hq ? float(last.height) / hARC : 1
 wStretch	= handHeld || pass == 0 ? 1 \
 			: (float(last.width) / last.height) / (float(wAspect) / hAspect)
 smallerSide = last.height < last.width ? last.height : last.width
