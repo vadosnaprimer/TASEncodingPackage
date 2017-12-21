@@ -150,7 +150,7 @@ lowerScreen = last.Crop(0, last.height/2, -0, -0)
 halfScreen = upperScreen	# set which NDS screen to put as main
 stackNDS && hd ? StackHorizontal(halfScreen.PointResize(last.width*2, last.height), last) : 0
 
-#	Aspect ratio correction
+#	Aspect ratio correction for SD encodes
 height	= last.width > last.height * wAspect / hAspect \
 		? last.width * hAspect / wAspect \
 		: last.height
@@ -163,10 +163,17 @@ width	= width  % 4 == 1 ? width  + 3 : \
 height	= height % 4 == 1 ? height + 3 : \
 		  height % 4 == 2 ? height + 2 : \
 		  height % 4 == 3 ? height + 1 : height
+#	Remember SD frame size for subYpos HD tweaks
 wARC	= width
 hARC	= height
-width	= hd ? width * (2160 / height) : width
+#	Actually go HD if we need
 height	= hd ? 2160 : height
+width	= handHeld \
+		? height * last.width / last.height \
+		: height * wAspect / hAspect
+width	= width  % 4 == 1 ? width  + 3 : \
+		  width  % 4 == 2 ? width  + 2 : \
+		  width  % 4 == 3 ? width  + 1 : width
 
 #	Rescaling
 #	hd: pointresize to 4K, then just subsample with lanczos in the end
