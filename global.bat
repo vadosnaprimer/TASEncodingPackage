@@ -6,7 +6,8 @@
 :: Accepts command line arguments
 
 @echo off
-setlocal enableextensions
+setlocal EnableExtensions
+setlocal EnableDelayedExpansion
 
 if [%1]==[/?] goto syntax_cmd
 
@@ -54,6 +55,8 @@ echo Press 3 for 16:9 (LCD TV)
 echo Press 4 to enter your own
 echo.
 
+title User input expected...
+
 set /p ANSWER=
 if "%ANSWER%"=="1" goto handHeld_SAR
 if "%ANSWER%"=="2" (
@@ -67,6 +70,7 @@ if "%ANSWER%"=="3" (
 	goto TV_SAR
 )
 if "%ANSWER%"=="4" goto Get_AR
+if "%ANSWER%"=="/?" goto syntax_cmd
 
 echo I'm not kidding!
 goto SAR_OPTIONS
@@ -150,7 +154,9 @@ goto remove_starting_slash
 
 : get_extrahq_scale
 echo.
-set /p ExtraScaleFactors=What scale factor do you want to use? (2-16, separate multiple with /)
+echo What scale factor do you want to use? (2-16, separate multiple with /)
+echo.
+set /p ExtraScaleFactors=
 
 : remove_starting_slash
 if [%ExtraScaleFactors%]==[] goto get_extrahq_scale
@@ -198,6 +204,8 @@ echo C'mon! Let's finish this already!
 goto get_extrahq_type
 
 : HD
+title Starting up...
+title
 :: Audio ::
 ".\programs\avs2pipemod" -wav encode.avs | ".\programs\venc" -q10 - ".\temp\audio_youtube.ogg"
 echo.
@@ -225,6 +233,8 @@ rem start "" cmd /c echo todo ^| "%~dp0programs\tvcman.exe" "%~dp0output\encode%
 if "%EncodeChoice%"=="3" goto Defaults
 
 : 10bit444
+title Starting up...
+title
 :: Audio ::
 ".\programs\avs2pipemod" -wav encode.avs | ".\programs\sox" -t wav - -t wav - trim 0.0065 | ".\programs\opusenc" --bitrate 64 --padding 0 - ".\temp\audio.opus"
 echo.
@@ -248,6 +258,8 @@ echo.
  if "%EncodeChoice%"=="1" goto Defaults
 
 : 512kb
+title Starting up...
+title
 :: Audio ::
 ".\programs\avs2pipemod" -wav encode.avs | ".\programs\qaac64" -v 0 --he -q 2 --delay -5187s --threading --no-smart-padding - -o ".\temp\audio.mp4"
 echo.
@@ -266,6 +278,8 @@ for /f %%k in ('%~dp0programs\div %fps%') do (set double=%%k)
 goto Defaults
 
 : ExtraHQ_10bit444
+title Starting up...
+title
 :: Extra 10bit444 ::
 :: Audio ::
 ".\programs\avs2pipemod" -wav encode.avs | ".\programs\sox" -t wav - -t wav - trim 0.0065 | ".\programs\opusenc" --bitrate 128 --padding 0 - ".\temp\audio_extra.opus"
@@ -279,9 +293,9 @@ echo.
 ".\programs\avs2pipemod" -benchmark encode.avs
 ".\programs\replacetext" "encode.avs" "pass = 1" "pass = 2"
 echo.
-echo --------------------------------
-echo  Encoding ExtraHQ downloadable
-echo --------------------------------
+echo ----------------------------------------
+echo  Encoding ExtraHQ 10bit444 downloadable
+echo ----------------------------------------
 echo.
 :: Video ::
 ".\programs\replacetext" "encode.avs" "i444 = false" "i444 = true"
@@ -291,13 +305,15 @@ echo.
 if "%ExtraType%" NEQ "3" goto check_more_hqfactors
 
 : ExtraHQ_512kb
+title Starting up...
+title
 :: Extra 512kb ::
 :: Audio ::
 ".\programs\avs2pipemod" -wav encode.avs | ".\programs\qaac64" -q 0.5 --delay -2112s --threading --no-smart-padding - -o ".\temp\audio_extra.mp4"
 echo.
-echo -------------------------------
-echo  Encoding ExtraHQ stream
-echo -------------------------------
+echo ---------------------------------------
+echo  Encoding ExtraHQ Archive 512kb stream
+echo ---------------------------------------
 echo.
 :: Video ::
 ".\programs\replacetext" "encode.avs" "pass = 2" "pass = 0"
@@ -362,6 +378,11 @@ echo.
 echo   NOTE: hq_opt and hq_scale are used only when enc_opt is 5.
 echo   NOTE: Do not put spaces between enc_opt and hq_opt.  For example, enter 52 to
 echo         indicate encode option 5 and extra HQ option 2.
+echo.
 
-:end
+: end
+title ALL DONE!
+if "!cmdcmdline!" neq "!cmdcmdline:%~f0=!" (
+	pause
+)
 endlocal
