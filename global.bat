@@ -117,7 +117,7 @@ if [%param_2%]==[] goto get_encode_option
 set EncodeChoice=%param_2:~0,1%
 goto process_encode_option
 
-:get_encode_option
+: get_encode_option
 echo.
 echo What encode do you want to do?
 echo.
@@ -129,7 +129,7 @@ echo Press 5 for Extra HQ encodes.
 echo.
 set /p EncodeChoice=
 
-:process_encode_option
+: process_encode_option
 if "%EncodeChoice%"=="1" goto 10bit444
 if "%EncodeChoice%"=="2" goto 512kb
 if "%EncodeChoice%"=="3" goto HD
@@ -148,11 +148,11 @@ if [%3]==[] goto get_extrahq_scale
 set ExtraScaleFactors=%3
 goto remove_starting_slash
 
-:get_extrahq_scale
+: get_extrahq_scale
 echo.
 set /p ExtraScaleFactors=What scale factor do you want to use? (2-16, separate multiple with /)
 
-:remove_starting_slash
+: remove_starting_slash
 if [%ExtraScaleFactors%]==[] goto get_extrahq_scale
 if [%ExtraScaleFactors:~0,1%]==[/] (
  set ExtraScaleFactors=%ExtraScaleFactors:~1%
@@ -163,7 +163,7 @@ set ExtraScale=
 for /f "tokens=1 delims=/" %%G in ('echo %ExtraScaleFactors%') do (set ExtraScale=%%G)
 if [%ExtraScale%]==[] goto get_extrahq_scale
 
-:verify_extrahq_scale
+: verify_extrahq_scale
 if %ExtraScale% GTR 1 (if %ExtraScale% LSS 17 goto ExtraHQ_type)
 echo.
 echo Uhhh... Seriously?
@@ -179,7 +179,7 @@ if [%param_2:~1,1%]==[] goto get_extrahq_type
 set ExtraType=%param_2:~1,1%
 goto process_extrahq_type
 
-:get_extrahq_type
+: get_extrahq_type
 echo.
 echo Which ExtraHQ encode type do you want to do using scale %ExtraScale%?
 echo.
@@ -189,7 +189,7 @@ echo Press 3 both.
 echo.
 set /p ExtraType=
 
-:process_extrahq_type
+: process_extrahq_type
 if "%ExtraType%"=="1" goto ExtraHQ_10bit444
 if "%ExtraType%"=="2" goto ExtraHQ_512kb
 if "%ExtraType%"=="3" goto ExtraHQ_10bit444
@@ -268,7 +268,7 @@ goto Defaults
 : ExtraHQ_10bit444
 :: Extra 10bit444 ::
 :: Audio ::
-".\programs\avs2pipemod" -wav encode.avs | ".\programs\sox" -t wav - -t wav - trim 0.0065 | ".\programs\opusenc" --bitrate 64 --padding 0 - ".\temp\audio_extra.opus"
+".\programs\avs2pipemod" -wav encode.avs | ".\programs\sox" -t wav - -t wav - trim 0.0065 | ".\programs\opusenc" --bitrate 128 --padding 0 - ".\temp\audio_extra.opus"
 echo.
 echo ----------------------
 echo  Generating timecodes
@@ -293,7 +293,7 @@ if "%ExtraType%" NEQ "3" goto check_more_hqfactors
 : ExtraHQ_512kb
 :: Extra 512kb ::
 :: Audio ::
-".\programs\avs2pipemod" -wav encode.avs | ".\programs\qaac64" -v 0 --he -q 2 --delay -5187s --threading --no-smart-padding - -o ".\temp\audio_extra.mp4"
+".\programs\avs2pipemod" -wav encode.avs | ".\programs\qaac64" -q 0.5 --delay -2112s --threading --no-smart-padding - -o ".\temp\audio_extra.mp4"
 echo.
 echo -------------------------------
 echo  Encoding ExtraHQ stream
