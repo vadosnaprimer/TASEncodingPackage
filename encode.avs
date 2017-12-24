@@ -42,7 +42,7 @@ ms_format = "%1.0f"	# string format: http://avisynth.nl/index.php/Internal_funct
 
 #	Extra HQ (upscaled downloadable encodes)
 hq = false			# auto
-hq_scale = 2		# manual for now
+hq_scale = 2		# auto, use for preview
 hq_hiResSrc = false	# we downscale hires 3D source, and upscale lowres pixelated source
 hq_baseWidth = 320	# aspect-corrected 1x width (only for hires source)
 hq_baseHeight = 240	# aspect-corrected 1x height (only for hires source)
