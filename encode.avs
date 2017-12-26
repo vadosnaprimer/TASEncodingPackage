@@ -37,7 +37,7 @@ bighaloCutoff = 384	# width and height above this will use bighalo instead of fr
 ms = false			# enable multisegment import
 ms_base = "movie_"	# common string for all segment names
 ms_start = 0		# number of the first segment
-ms_end = 15			# number of the first segment
+ms_end = 15			# number of the last segment
 ms_format = "%1.0f"	# string format: http://avisynth.nl/index.php/Internal_functions#String
 
 #	Extra HQ (upscaled downloadable encodes)
