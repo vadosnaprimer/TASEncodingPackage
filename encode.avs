@@ -11,7 +11,7 @@ AudioDub(V, A)
 */
 
 trimFrame = 654321	# manual, discards logo lengh automatically
-handHeld = false	# auto, but set it for preview
+handHeld = false 	# auto, but set it for preview
 hd = false			# auto, but set it for preview
 halfFPS = false		# for games that "lag" every other frame
 stackNDS = false	# stack one of NDS screens near both of them for HD
@@ -26,10 +26,12 @@ rerecords = "0"
 
 #	Subtitles timing and placement
 subFF = 600			# first subtitles frame, set manually!
-subAlign = 8		# subtitles alignment (7/8/9)
+subAlign = 8		# subtitles horizontal alignment (7/8/9)
+subXoffs = 0		# subtitles horizontal offset (only with subAlign 7 and 9)
 subYpos = 0			# subtitles vertical position
 subFont = "helv"	# see "fonts" folder for available types
-subFF2delay = 1		# delay in frames between the subtitle entries
+subFF2delay = 0		# extra delay in frames between subtitle entries 1 and 2
+subFF2delay2 = 0	# extra delay in frames between subtitle entries 2 and 3
 bighaloCutoff = 384	# width and height above this will use bighalo instead of freesub
 
 #	Multisegment import (upscales hires segments straight to HD when needed)
@@ -54,11 +56,11 @@ hAspect = 3
 #	Subtitles text
 subString1	= game + "\n" \
 			+ (branch == "''" ? "" : branch + "\n") \
-			+ "Played by " + author \
-			+ "\nPlaying time:\n " + time \
-			+ "\nRerecord count:\n " + rerecords	
-subString2	= "This is a tool-\nassisted recording." \
-			+ "\nFor details, visit\nhttp://TASVideos.org/"
+			+ "Played by " + author
+subString2	= "Playing time: " + time \
+			+ "\nRerecord count: " + rerecords	
+subString3	= "This is a tool-assisted recording." \
+subString4	= "For details, visit http://TASVideos.org/"
 
 ################
 # LEGACY STUFF #
@@ -115,6 +117,7 @@ pass = 0
 i444 = false
 originalWidth = last.width
 originalHeight = last.height
+hdvb = hd && vb
 
 root = ScriptDir()
 Import     (root + "programs\functions.avsi")
@@ -152,18 +155,20 @@ halfScreen = upperScreen	# set which NDS screen to put as main
 stackNDS && hd ? StackHorizontal(halfScreen.PointResize(last.width*2, last.height), last) : 0
 
 #	Aspect ratio correction for SD encodes
-height	= last.width > last.height * wAspect / hAspect \
+height	= handHeld \
+		? last.height \
+		: last.width > last.height * wAspect / hAspect \
 		? last.width * hAspect / wAspect \
 		: last.height
 width	= handHeld \
-		? height * last.width / last.height \
+		? last.width \
 		: height * wAspect / hAspect
-width	= width  % 4 == 1 ? width  + 3 : \
-		  width  % 4 == 2 ? width  + 2 : \
-		  width  % 4 == 3 ? width  + 1 : width
-height	= height % 4 == 1 ? height + 3 : \
-		  height % 4 == 2 ? height + 2 : \
-		  height % 4 == 3 ? height + 1 : height
+width	= width  % 4 == 1 ? width  + 3 \
+		: width  % 4 == 2 ? width  + 2 \
+		: width  % 4 == 3 ? width  + 1 : width
+height	= height % 4 == 1 ? height + 3 \
+		: height % 4 == 2 ? height + 2 \
+		: height % 4 == 3 ? height + 1 : height
 #	Remember SD frame size for subYpos HD tweaks
 wARC	= width
 hARC	= height
@@ -204,13 +209,17 @@ d = ImageSource(file=file, start=0, end=int((g.FrameRate * 2) - 1), fps=g.FrameR
 	.ConvertToRGB32().AssumeFPS(g.FrameRateNumerator, g.FrameRateDenominator)
 e = BlankClip(d, audio_rate=g.AudioRate, channels=g.AudioChannels)
 f = AudioDub(d, e).Lanczos4Resize(g.width, g.height)
-f ++ g
+last = hdvb ? f.PointResize(g.width / 2, g.height) : f ++ g
+
+#	Virtual Boy
+left  = hdvb ? last ++  left.PointResize(last.width, last.height) : 0
+right = hdvb ? last ++ right.PointResize(last.width, last.height) : 0
 
 #	Additional subtitle magic
 #	figure out how much our font will be changed after x264 ARC and for HD
 wFactor  	= hd || hq ? float(last.width)  / wARC : 1
 hFactor		= hd || hq ? float(last.height) / hARC : 1
-wStretch	= handHeld || pass == 0 ? 1 \
+wStretch	= (handHeld || pass == 0) && !hdvb ? 1 \
 			: (float(last.width) / last.height) / (float(wAspect) / hAspect)
 smallerSide = last.height < last.width ? last.height : last.width
 biggerSide  = last.height > last.width ? last.height : last.width
@@ -224,12 +233,13 @@ useBighalo  = biggerSide > bighaloCutoff \
 
 #	Subtitles variables
 subRatio	= float(last.height) / 21
-subXpos 	= subAlign == 7 ? 2 * wFactor : \
+subXpos 	= subAlign == 7 ? (2 + subXoffs) * wFactor : \
 			  subAlign == 8 ? last.width / 2 : \
-			  last.width - 2 * wFactor
-subXpos 	= hd && vb ? subXpos / 2 : subXpos
+			  last.width - (2 + subXoffs) * wFactor
+subXpos 	= hdvb ? subXpos / 2 : subXpos
 subYpos		= int(float(subYpos) / (wStretch > 1 ? wStretch : 1) * hFactor)
-subSize 	= useBighalo ? subRatio \
+subYpos		= hdvb ? subYpos * hFactor : subYpos
+subSize 	= useBighalo ? subRatio * 1.4 \
 			: subRatio < 10 ?  8 \
 			: subRatio < 12 ? 10 \
 			: subRatio < 14 ? 12 \
@@ -241,60 +251,77 @@ subHaloSize = subHaloSize < 2 ? 2 : subHaloSize
 subFontName = subFont + (smallerSide < 224 ? "R" : "B")
 subFontFile = "./fonts/" + subFontName + string(subSize) + ".bdf"
 subLength	= int(last.FrameRate * 5)
-subFF		= vb && hd ? subFF - int(last.FrameRate * 2) : subFF
-subFF2		= SubFF + subLength + subFF2delay
+subFF2		= SubFF  + subLength + 1 + subFF2delay
+subFF3		= SubFF2 + subLength + 1 + subFF2delay2
 subColor	= vb ? $009D9D9D : $00FFFFFF
 subRadius	= hd ? 0 : subHaloSize
 
-#	Virtual Boy hacks
-left = hd && vb ? \
-	   f.PointResize(last.width / 2, last.height) ++ \
-	left.PointResize(last.width / 2, last.height).ng_bighalo( \
-		subString1, x=subXpos, y=subYpos, align=subAlign, \
-		first_frame=subFF, last_frame=(subFF+subLength), \
-		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
-	).ng_bighalo( \
-		subString2, x=subXpos, y=subYpos, align=subAlign, \
-		first_frame=subff2, last_frame=(subff2+SubLength), \
-		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
-	) : 0
-
-right = hd && vb ? \
-	    f.PointResize(last.width / 2, last.height) ++ \
-	right.PointResize(last.width / 2, last.height).ng_bighalo( \
-		subString1, x=subXpos, y=subYpos, \
-		align=subAlign, first_frame=subFF, last_frame=subFF+subLength, \
-		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
-	).ng_bighalo( \
-		subString2, x=subXpos, y=subYpos, \
-		align=subAlign, first_frame=subff2, last_frame=subff2+SubLength, \
-		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2 \
-	) : 0
-
-hd && vb ? yt3d(left, right).AudioDub(left) : 0
-
 #	Subtitles functions
-useBighalo ? vb ? 0 : ng_bighalo( \
-	subString1, x=subXpos, y=subYpos, align=subAlign, first_frame=subFF, \
+useBighalo ? vb ? 0 : ng_bighalo(subString1, \
+	x=subXpos, y=subYpos, align=subAlign, first_frame=subFF, \
 	last_frame=subFF+subLength, size=subSize, font_width=subWidth, \
-	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius \
-) : FreeSub( \
-	subString1, x=subXpos, y=subYpos+subHaloSize, \
+	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius) \
+: FreeSub(subString1, x=subXpos, y=subYpos+subHaloSize, \
 	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
 	align=subAlign, first_frame=subFF, last_frame=subFF+subLength, \
-	text_color=subColor, halo_color=$00000000, lsp=2 \
-)
+	text_color=subColor, halo_color=$00000000, lsp=2)
 
-useBighalo ? vb ? 0 : ng_bighalo( \
-	subString2, x=subXpos, y=subYpos, align=subAlign, first_frame=subff2, \
+useBighalo ? vb ? 0 : ng_bighalo(subString2, \
+	x=subXpos, y=subYpos, align=subAlign, first_frame=subff2, \
 	last_frame=subff2+subLength, size=subSize, font_width=subWidth, \
-	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius \
-) : FreeSub( \
-	subString2, x=subXpos, y=subYpos+subHaloSize, \
+	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius) \
+: FreeSub(subString2, \
+	x=subXpos, y=subYpos+subHaloSize, \
 	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
 	align=subAlign, first_frame=subff2, last_frame=subff2+SubLength, \
-	text_color=subColor, halo_color=$00000000, lsp=2 \
-)
+	text_color=subColor, halo_color=$00000000, lsp=2)
+
+useBighalo ? vb ? 0 : ng_bighalo(subString3 + "\n" + subString4,  \
+	x=subXpos, y=subYpos, align=subAlign, first_frame=subFF3, \
+	last_frame=subFF3+subLength, size=subSize, font_width=subWidth, \
+	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius) \
+: FreeSub(subString3 + "\n" + subString4,  \
+	x=subXpos, y=subYpos+subHaloSize, \
+	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
+	align=subAlign, first_frame=subFF3, last_frame=subFF3+SubLength, \
+	text_color=subColor, halo_color=$00000000, lsp=2)
+
+/*
+useBighalo ? vb ? 0 : ng_bighalo(subString4,  \
+	x=subXpos, y=subYpos, align=subAlign, first_frame=subff2 + subLength*2 + 1, \
+	last_frame=subff2+subLength*3, size=subSize, font_width=subWidth, \
+	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius) \
+: FreeSub(subString4,  \
+	x=subXpos, y=subYpos+subHaloSize, \
+	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
+	align=subAlign, first_frame=subff2 + subLength*2 + 1, last_frame=subff2+SubLength*3, \
+	text_color=subColor, halo_color=$00000000, lsp=2)
+*/
+
+#	Virtual Boy hacks
+left = hdvb ? left \
+	.ng_bighalo(subString1, x=subXpos, y=subYpos, \
+		align=subAlign, first_frame=subFF, last_frame=subFF+subLength, \
+		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2) \
+	.ng_bighalo(subString2, x=subXpos, y=subYpos, \
+		align=subAlign, first_frame=subFF2, last_frame=subFF2+subLength, \
+		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2) \
+	.ng_bighalo(subString3 + "\n" + subString4, x=subXpos, y=subYpos, \
+		align=subAlign, first_frame=subFF3, last_frame=(subFF3+SubLength), \
+		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2) : 0
+
+right = hdvb ? right \
+	.ng_bighalo(subString1, x=subXpos, y=subYpos, \
+		align=subAlign, first_frame=subFF, last_frame=subFF+subLength, \
+		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2) \
+	.ng_bighalo(subString2, x=subXpos, y=subYpos, \
+		align=subAlign, first_frame=subFF2, last_frame=subFF2+subLength, \
+		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2) \
+	.ng_bighalo(subString3 + "\n" + subString4, x=subXpos, y=subYpos, \
+		align=subAlign, first_frame=subFF3, last_frame=subFF3+SubLength, \
+		size=subSize, text_color=subColor, halo_color=$00000000, lsp=2) : 0
+
+hdvb ? yt3d(left, right).AudioDub(left) : 0
 
 Trim(0, trimFrame)
 halfFPS ? SelectOdd : 0
