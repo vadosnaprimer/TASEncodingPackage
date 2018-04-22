@@ -202,11 +202,11 @@ g = hq && !hd \
 			: Lanczos4Resize(width, height)
 
 #	If ms enabled, we use parameters of "g" to apply to all segments
-g = ms ? g.AppendSegment(ms_base, ms_start, ms_end, ms_format, hd) : g
+g = ms ? g.AppendSegment(ms_base, ms_start, ms_end, ms_format, hd).ConvertToRGB32() : g
 
 #	Logo
 d = ImageSource(file=file, start=0, end=int((g.FrameRate * 2) - 1), fps=g.FrameRate) \
-	.ConvertToRGB32().AssumeFPS(g.FrameRateNumerator, g.FrameRateDenominator)
+	.ConvertToRGB32().AssumeFPS(g)
 e = BlankClip(d, audio_rate=g.AudioRate, channels=g.AudioChannels)
 f = AudioDub(d, e).Lanczos4Resize(g.width, g.height)
 last = hdvb ? f.PointResize(g.width / 2, g.height) : f ++ g
