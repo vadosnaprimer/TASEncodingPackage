@@ -27,7 +27,7 @@ rerecords = "0"
 #	Subtitles timing and placement
 subFF = 600			# first subtitles frame, set manually!
 subAlign = 8		# subtitles horizontal alignment (7/8/9)
-subXoffs = 0		# subtitles horizontal offset (only with subAlign 7 and 9)
+subXoffs = 0		# subtitles horizontal offset (can be negative)
 subYpos = 0			# subtitles vertical position
 subFont = "helv"	# see "fonts" folder for available types
 subFF2delay = 0		# extra delay in frames between subtitle entries 1 and 2
@@ -234,7 +234,7 @@ useBighalo  = biggerSide > bighaloCutoff \
 #	Subtitles variables
 subRatio	= float(last.height) / 21
 subXpos 	= subAlign == 7 ? (2 + subXoffs) * wFactor : \
-			  subAlign == 8 ? last.width / 2 : \
+			  subAlign == 8 ? last.width / 2 + subXoffs * wFactor : \
 			  last.width - (2 + subXoffs) * wFactor
 subXpos 	= hdvb ? subXpos / 2 : subXpos
 subYpos		= int(float(subYpos) / (wStretch > 1 ? wStretch : 1) * hFactor)
