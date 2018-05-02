@@ -233,9 +233,11 @@ useBighalo  = biggerSide > bighaloCutoff \
 
 #	Subtitles variables
 subRatio	= float(last.height) / 21
-subXpos 	= subAlign == 7 ? (2 + subXoffs) * wFactor : \
-			  subAlign == 8 ? last.width / 2 + subXoffs * wFactor : \
-			  last.width - (2 + subXoffs) * wFactor
+subXpos 	= subAlign == 7 || subAlign == 4 || subAlign == 1 \
+			? (2 + subXoffs) * wFactor \
+			: subAlign == 8 || subAlign == 5 || subAlign == 2 \
+			? last.width / 2 + subXoffs * wFactor \
+			: last.width - (2 + subXoffs) * wFactor
 subXpos 	= hdvb ? subXpos / 2 : subXpos
 subYpos		= int(float(subYpos) / (wStretch > 1 ? wStretch : 1) * hFactor)
 subYpos		= hdvb ? subYpos * hFactor : subYpos
