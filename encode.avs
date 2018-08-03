@@ -27,6 +27,7 @@ rerecords = "0"
 #	Subtitles timing and placement
 subFF = 600			# first subtitles frame, set manually!
 subAlign = 8		# subtitles horizontal alignment (7/8/9)
+subYpos = 0			# subtitles vertical position
 subXoffs = 0		# subtitles horizontal offset (can be negative)
 subYpos = 0			# subtitles vertical position
 subFont = "helv"	# see "fonts" folder for available types
@@ -44,7 +45,7 @@ ms_format = "%1.0f"	# string format: http://avisynth.nl/index.php/Internal_funct
 
 #	Extra HQ (upscaled downloadable encodes)
 hq = false			# auto
-hq_scale = 2		# auto, use for preview
+hq_scale = 2		# manual for now
 hq_hiResSrc = false	# we downscale hires 3D source, and upscale lowres pixelated source
 hq_baseWidth = 320	# aspect-corrected 1x width (only for hires source)
 hq_baseHeight = 240	# aspect-corrected 1x height (only for hires source)
@@ -126,6 +127,7 @@ LoadPlugin (root + "programs\mvtools2.dll")
 LoadPlugin (root + "programs\mt_masktools-26.dll")
 LoadPlugin (root + "programs\autolevels_0.6_20110109.dll")
 LoadCPlugin(root + "programs\freesub.dll")
+LoadCPlugin(root + "programs\assrender.dll" )
 
 #	Deblink (uncomment corresponding variables above)
 # hd && blend ? ngdb ? ng_deblink(0.5) : TasBlend() : 0
@@ -151,6 +153,7 @@ file = hd || hq \
 	: last.height == 384 \
 		? "logonds.png" \
 		: "logo.png"
+# file = !hd ? "logo34.png" : "hdlogo34.png"
 
 #	Stack 3 NDS screens
 upperScreen = last.Crop(0, 0, -0, last.height/2)
@@ -236,7 +239,9 @@ useBighalo  = biggerSide > bighaloCutoff \
 			&& smallerSide >= 224)
 
 #	Subtitles variables
+subXoffs	= int(subXoffs * wStretch)
 subRatio	= float(last.height) / 21
+#subRatio	= float(smallerSide) / 21
 subXpos 	= subAlign == 7 || subAlign == 4 || subAlign == 1 \
 			? (2 + subXoffs) * wFactor \
 			: subAlign == 8 || subAlign == 5 || subAlign == 2 \
@@ -245,7 +250,7 @@ subXpos 	= subAlign == 7 || subAlign == 4 || subAlign == 1 \
 subXpos 	= hdvb ? subXpos / 2 : subXpos
 subYpos		= int(float(subYpos) / (wStretch > 1 ? wStretch : 1) * hFactor)
 subYpos		= hdvb ? subYpos * hFactor : subYpos
-subSize 	= useBighalo ? subRatio * 1.4 \
+subSize 	= useBighalo ? subRatio \
 			: subRatio < 10 ?  8 \
 			: subRatio < 12 ? 10 \
 			: subRatio < 14 ? 12 \
@@ -253,7 +258,7 @@ subSize 	= useBighalo ? subRatio * 1.4 \
 			: subRatio < 24 ? 18 : 24
 subWidth	= useBighalo && !hd ? float(subSize) / 2.323 * wStretch : 0
 subHaloSize = useBighalo ? floor(subSize / 7) : floor(subSize / 4.5)
-subHaloSize = subHaloSize < 2 ? 2 : subHaloSize
+subHaloSize = subHaloSize < 3 ? 3 : subHaloSize
 subFontName = subFont + (smallerSide < 224 ? "R" : "B")
 subFontFile = "./fonts/" + subFontName + string(subSize) + ".bdf"
 subLength	= int(last.FrameRate * 5)
@@ -330,13 +335,16 @@ right = hdvb ? right \
 hdvb ? yt3d(left, right).AudioDub(left) : 0
 
 Trim(0, trimFrame)
-halfFPS ? SelectOdd : 0
 
 #	Youtube can't hanble fps above 60
 hd && last.FrameRate > 60 ? ChangeFPS(60) : 0
 
+halfFPS ? SelectOdd : 0
+
 #	YV24 conversion doesn't reduce chroma, so "point" is fine
 ConvertToYV24(chromaresample="point", matrix=(hd ? "Rec709" : "PC.601"))
+
+# pass == 1 ? assrender("subtitles.ass") : 0
 
 #	Remove duplicate frames for primary
 pass == 1 ? ExactDedup(firstpass=true, dupinfo="./temp/dup.txt",times="./temp/times.txt") : 0
