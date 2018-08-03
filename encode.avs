@@ -29,7 +29,6 @@ subFF = 600			# first subtitles frame, set manually!
 subAlign = 8		# subtitles horizontal alignment (7/8/9)
 subYpos = 0			# subtitles vertical position
 subXoffs = 0		# subtitles horizontal offset (can be negative)
-subYpos = 0			# subtitles vertical position
 subFont = "helv"	# see "fonts" folder for available types
 subFF2delay = 0		# extra delay in frames between subtitle entries 1 and 2
 subFF2delay2 = 0	# extra delay in frames between subtitle entries 2 and 3
