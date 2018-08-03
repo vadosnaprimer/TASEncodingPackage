@@ -124,10 +124,14 @@ Import     (root + "programs\functions.avsi")
 LoadPlugin (root + "programs\ExactDedup.dll")
 LoadPlugin (root + "programs\mvtools2.dll")
 LoadPlugin (root + "programs\mt_masktools-26.dll")
+LoadPlugin (root + "programs\autolevels_0.6_20110109.dll")
 LoadCPlugin(root + "programs\freesub.dll")
 
 #	Deblink (uncomment corresponding variables above)
 # hd && blend ? ngdb ? ng_deblink(0.5) : TasBlend() : 0
+
+#	Make too dark scenes brighter
+# AutoLevels(filterRadius=1000, sceneChgThresh=200, gamma=1.1)
 
 #	VirtualBoy (bizhawk only!)
 #	http://tasvideos.org/forum/viewtopic.php?p=435440#435440
