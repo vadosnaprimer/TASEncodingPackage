@@ -253,7 +253,7 @@ echo --------------------------------
 echo.
 :: Video ::
 ".\programs\replacetext" "encode.avs" "i444 = false" "i444 = true"
-".\programs\avs2pipemod" -y4mp encode.avs | ".\programs\x264_x64" --threads auto --sar "%VAR%" --crf 20 --keyint 600 --ref 16 --no-fast-pskip --bframes 16 --b-adapt 2 --direct auto --me tesa --merange 64 --subme 11 --trellis 2 --partitions all --no-dct-decimate --input-range pc --range pc --tcfile-in ".\temp\times.txt" -o ".\temp\video.mkv" --colormatrix smpte170m --output-csp i444 --demuxer y4m -
+".\programs\avs2pipemod" -y4mp encode.avs | ".\programs\x264_x64" --threads auto --sar "%VAR%" --crf 20 --keyint 600 --ref 16 --no-fast-pskip --bframes 16 --b-adapt 2 --direct auto --me tesa --merange 64 --subme 11 --trellis 2 --partitions all --no-dct-decimate --input-range pc --range pc --tcfile-in ".\temp\times.txt" -o ".\temp\video.mkv" --colormatrix smpte170m --output-csp i444 --profile high444 --output-depth 10 --demuxer y4m -
 :: Muxing ::
 ".\programs\mkvmerge" -o ".\output\encode.mkv" --timecodes -1:".\temp\times.txt" ".\temp\video.mkv" ".\temp\audio.opus"
  if "%EncodeChoice%"=="1" goto Defaults
@@ -300,7 +300,7 @@ echo ----------------------------------------
 echo.
 :: Video ::
 ".\programs\replacetext" "encode.avs" "i444 = false" "i444 = true"
-".\programs\avs2pipemod" -y4mp encode.avs | ".\programs\x264_x64" --threads auto --sar "%VAR%" --crf 20 --keyint 600 --preset veryslow --input-range pc --range pc --tcfile-in ".\temp\times.txt" -o ".\temp\video_%ExtraScale%x.mkv" --colormatrix smpte170m --output-csp i444  --demuxer y4m -
+".\programs\avs2pipemod" -y4mp encode.avs | ".\programs\x264_x64" --threads auto --sar "%VAR%" --crf 20 --keyint 600 --preset veryslow --input-range pc --range pc --tcfile-in ".\temp\times.txt" -o ".\temp\video_%ExtraScale%x.mkv" --colormatrix smpte170m --output-csp i444 --profile high444 --output-depth 10 --demuxer y4m -
 :: Muxing ::
 ".\programs\mkvmerge" -o ".\output\encode_%ExtraScale%x.mkv" --timecodes -1:".\temp\times.txt" ".\temp\video_%ExtraScale%x.mkv" ".\temp\audio_extra.opus"
 if "%ExtraType%" NEQ "3" goto check_more_hqfactors
