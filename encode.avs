@@ -3,12 +3,10 @@
 
 AviSource("movie.avi")
 
-#	Dolphin (set fps properly, remove /* and */ to uncomment)
-/*
-V = FFVideoSource("movie.avi", fpsnum=60)
-A = FFAudioSource("movie.wav")
-AudioDub(V, A)
-*/
+#	Dolphin (with FFMPEG). Use FFV1 patch for dumping:
+#	https://github.com/vadosnaprimer/dolphin/releases
+# AviSource("movie.avi", pixel_type="RGB24")
+# AudioDub(last, wavsource("dspdump.wav"))
 
 trimFrame = 654321	# manual, discards logo lengh automatically
 handHeld = false 	# auto, but set it for preview
