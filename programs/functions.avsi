@@ -9,8 +9,8 @@ function AppendSegment(
 \){
 	filename = base + string(first_val, format) + ".avi"
 	result   = hd \
-		? AviSource(filename).PointResize  (sample.width, sample.height).ChangeFPS(sample) \
-		: AviSource(filename).LanczosResize(sample.width, sample.height).ChangeFPS(sample)
+		? AviSource(filename).PointResize  (sample.width, sample.height) \
+		: AviSource(filename).LanczosResize(sample.width, sample.height)
 	return (first_val < last_val) \
 		? result + sample.AppendSegment(base, first_val+1, last_val, format, hd) \
 		: result
