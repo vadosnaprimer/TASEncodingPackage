@@ -25,6 +25,7 @@ rerecords = "0"
 #	Subtitles timing and placement
 subFF = 600			# first subtitles frame, set manually!
 subAlign = 8		# subtitles horizontal alignment (7/8/9)
+subEntry = 2		# sets the number of sub entries (2/3/4)
 subYpos = 0			# subtitles vertical position
 subXoffs = 0		# subtitles horizontal offset (can be negative)
 subFont = "helv"	# see "fonts" folder for available types
@@ -265,16 +266,38 @@ subColor	= vb ? $009D9D9D : $00FFFFFF
 subRadius	= hd ? 0 : subHaloSize
 
 #	Subtitles functions
-useBighalo ? vb ? 0 : ng_bighalo(subString1, \
+
+subEntry == 2 ? useBighalo ? vb ? 0 : ng_bighalo(subString1 + "\n" + SubString2, \
+	x=subXpos, y=subYpos, align=subAlign, first_frame=subFF, \
+	last_frame=subFF+subLength, size=subSize, font_width=subWidth, \
+	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius) \
+: FreeSub(subString1 + "\n" + SubString2, x=subXpos, y=subYpos+subHaloSize, \
+	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
+	align=subAlign, first_frame=subFF, last_frame=subFF+subLength, \
+	text_color=subColor, halo_color=$00000000, lsp=2):0
+	
+	
+subEntry == 2 ? useBighalo ? vb ? 0 : ng_bighalo(subString3 + "\n" + subString4, \
+	x=subXpos, y=subYpos, align=subAlign, first_frame=subff2, \
+	last_frame=subff2+subLength, size=subSize, font_width=subWidth, \
+	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius) \
+: FreeSub(subString3 + "\n" + subString4, \
+	x=subXpos, y=subYpos+subHaloSize, \
+	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
+	align=subAlign, first_frame=subff2, last_frame=subff2+SubLength, \
+	text_color=subColor, halo_color=$00000000, lsp=2) : 0
+	
+	
+subEntry == 3 || subEntry == 4 ? useBighalo ? vb ? 0 : ng_bighalo(subString1, \
 	x=subXpos, y=subYpos, align=subAlign, first_frame=subFF, \
 	last_frame=subFF+subLength, size=subSize, font_width=subWidth, \
 	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius) \
 : FreeSub(subString1, x=subXpos, y=subYpos+subHaloSize, \
 	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
 	align=subAlign, first_frame=subFF, last_frame=subFF+subLength, \
-	text_color=subColor, halo_color=$00000000, lsp=2)
-
-useBighalo ? vb ? 0 : ng_bighalo(subString2, \
+	text_color=subColor, halo_color=$00000000, lsp=2):0
+	
+subEntry == 3 || subEntry == 4 ? useBighalo ? vb ? 0 : ng_bighalo(subString2, \
 	x=subXpos, y=subYpos, align=subAlign, first_frame=subff2, \
 	last_frame=subff2+subLength, size=subSize, font_width=subWidth, \
 	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius) \
@@ -282,20 +305,30 @@ useBighalo ? vb ? 0 : ng_bighalo(subString2, \
 	x=subXpos, y=subYpos+subHaloSize, \
 	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
 	align=subAlign, first_frame=subff2, last_frame=subff2+SubLength, \
-	text_color=subColor, halo_color=$00000000, lsp=2)
-
-useBighalo ? vb ? 0 : ng_bighalo(subString3 + "\n" + subString4,  \
-	x=subXpos, y=subYpos, align=subAlign, first_frame=subFF3, \
+	text_color=subColor, halo_color=$00000000, lsp=2):0
+	
+subEntry == 3 ? useBighalo ? vb ? 0 : ng_bighalo(subString3 + "\n" + subString4,  \
+	x=subXpos, y=subYpos, align=subAlign, first_frame=subFF, \
 	last_frame=subFF3+subLength, size=subSize, font_width=subWidth, \
 	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius) \
 : FreeSub(subString3 + "\n" + subString4,  \
 	x=subXpos, y=subYpos+subHaloSize, \
 	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
 	align=subAlign, first_frame=subFF3, last_frame=subFF3+SubLength, \
-	text_color=subColor, halo_color=$00000000, lsp=2)
+	text_color=subColor, halo_color=$00000000, lsp=2):0
+	
+subEntry == 4 ? useBighalo ? vb ? 0 : ng_bighalo(subString3,  \
+	x=subXpos, y=subYpos, align=subAlign, first_frame=subFF3, \
+	last_frame=subFF3+subLength, size=subSize, font_width=subWidth, \
+	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius) \
+: FreeSub(subString3,  \
+	x=subXpos, y=subYpos+subHaloSize, \
+	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
+	align=subAlign, first_frame=subFF3, last_frame=subFF3+SubLength, \
+	text_color=subColor, halo_color=$00000000, lsp=2):0
 
-/*
-useBighalo ? vb ? 0 : ng_bighalo(subString4,  \
+
+subEntry == 4 ? useBighalo ? vb ? 0 : ng_bighalo(subString4,  \
 	x=subXpos, y=subYpos, align=subAlign, first_frame=subff2 + subLength*2 + 1, \
 	last_frame=subff2+subLength*3, size=subSize, font_width=subWidth, \
 	text_color=subColor, halo_color=$00000000, lsp=2, halo_radius=subRadius) \
@@ -303,9 +336,8 @@ useBighalo ? vb ? 0 : ng_bighalo(subString4,  \
 	x=subXpos, y=subYpos+subHaloSize, \
 	font=subFontFile, halo_width=subHaloSize, halo_height=subHaloSize, \
 	align=subAlign, first_frame=subff2 + subLength*2 + 1, last_frame=subff2+SubLength*3, \
-	text_color=subColor, halo_color=$00000000, lsp=2)
-*/
-
+	text_color=subColor, halo_color=$00000000, lsp=2):0
+	
 #	Virtual Boy hacks
 left = hdvb ? left \
 	.ng_bighalo(subString1, x=subXpos, y=subYpos, \
