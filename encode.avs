@@ -371,7 +371,11 @@ hd && last.FrameRate > 60 ? ChangeFPS(60) : 0
 halfFPS ? SelectOdd : 0
 
 #	YV24 conversion doesn't reduce chroma, so "point" is fine
-ConvertToYV24(chromaresample="point", matrix=(hd ? "Rec709" : "PC.601"))
+ConvertToYV24(chromaresample="point", matrix=(hd \
+	? "Rec709" \
+	: (pass == 0 \
+		? "Rec601" \
+		: "PC.601")))
 
 # pass == 1 ? assrender("subtitles.ass") : 0
 
